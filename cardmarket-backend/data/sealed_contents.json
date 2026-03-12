@@ -1,0 +1,941 @@
+{
+  "_comment": "Sealed-Produktinhalte nach product_id. Generiert auf Basis bekannter Pokemon-TCG-Produktdaten.",
+  "_legend": "Booster Box=36 Packs | ETB/TTB=9 Packs+Promo | Bundle=6 Packs | UPCs: TODO",
+  "1": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 122
+    }
+  ],
+  "2": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 134
+    }
+  ],
+  "3": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 133
+    }
+  ],
+  "4": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 132
+    }
+  ],
+  "5": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 128
+    }
+  ],
+  "6": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 130
+    }
+  ],
+  "7": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 130
+    }
+  ],
+  "8": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 129
+    }
+  ],
+  "9": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 129
+    }
+  ],
+  "10": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 127
+    }
+  ],
+  "11": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 126
+    }
+  ],
+  "12": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 125
+    }
+  ],
+  "13": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 125
+    }
+  ],
+  "14": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 123
+    }
+  ],
+  "15": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 122
+    }
+  ],
+  "16": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 122
+    }
+  ],
+  "17": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 121
+    }
+  ],
+  "18": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "19": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": null
+    }
+  ],
+  "20": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 120
+    }
+  ],
+  "21": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 120
+    }
+  ],
+  "22": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 119
+    }
+  ],
+  "23": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 118
+    }
+  ],
+  "24": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 118
+    }
+  ],
+  "25": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 117
+    }
+  ],
+  "26": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 117
+    }
+  ],
+  "27": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 115
+    }
+  ],
+  "28": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 115
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 2,
+      "linked_product_id": null
+    }
+  ],
+  "29": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 115
+    }
+  ],
+  "30": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 114
+    }
+  ],
+  "31": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 112
+    }
+  ],
+  "32": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 113
+    }
+  ],
+  "33": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 111
+    }
+  ],
+  "34": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 111
+    }
+  ],
+  "35": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 110
+    }
+  ],
+  "36": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 110
+    }
+  ],
+  "37": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 136
+    }
+  ],
+  "38": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "39": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "40": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "41": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "42": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "43": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "44": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 132
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "45": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 132
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "46": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 131
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "47": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 130
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "48": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 130
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "49": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 129
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "50": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 128
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "51": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 127
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "52": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 127
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "53": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 126
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "54": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 125
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "55": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 123
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "56": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 122
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "57": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 122
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "58": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 121
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "59": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "60": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "61": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 120
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "62": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 119
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "63": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 118
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "64": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 117
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "65": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 116
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "66": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 115
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "67": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 114
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "68": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 113
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "69": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 112
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "70": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 111
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "71": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 111
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "72": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 110
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "78": [
+    {
+      "component_type": "booster_pack",
+      "qty": 4,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "79": [
+    {
+      "component_type": "booster_pack",
+      "qty": 4,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "80": [
+    {
+      "component_type": "booster_pack",
+      "qty": 4,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "81": [
+    {
+      "component_type": "booster_pack",
+      "qty": 3,
+      "linked_product_id": 128
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "82": [
+    {
+      "component_type": "booster_pack",
+      "qty": 3,
+      "linked_product_id": 128
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "83": [
+    {
+      "component_type": "booster_pack",
+      "qty": 3,
+      "linked_product_id": 128
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "84": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 109
+    }
+  ],
+  "85": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 109
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "87": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "88": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "89": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "90": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "91": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "92": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "93": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "94": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "95": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "96": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": null
+    }
+  ],
+  "97": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "98": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "99": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": null
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "100": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 135
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "101": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 134
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "102": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 134
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "103": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 133
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "104": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 133
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ],
+  "105": [
+    {
+      "component_type": "booster_pack",
+      "qty": 36,
+      "linked_product_id": 108
+    }
+  ],
+  "106": [
+    {
+      "component_type": "booster_pack",
+      "qty": 6,
+      "linked_product_id": 108
+    }
+  ],
+  "107": [
+    {
+      "component_type": "booster_pack",
+      "qty": 9,
+      "linked_product_id": 108
+    },
+    {
+      "component_type": "promo_card",
+      "qty": 1,
+      "linked_product_id": null
+    }
+  ]
+}
