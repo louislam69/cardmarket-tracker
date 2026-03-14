@@ -470,11 +470,13 @@ def get_volatility(
         MAX(ps.realistic_price) AS max_price,
         MAX(ps.realistic_price) - MIN(ps.realistic_price) AS price_range,
         SQRT(
-          MAX(
-            0.0,
-            AVG(ps.realistic_price * ps.realistic_price)
-            - (AVG(ps.realistic_price) * AVG(ps.realistic_price))
-          )
+          CASE
+            WHEN AVG(ps.realistic_price * ps.realistic_price)
+                 - (AVG(ps.realistic_price) * AVG(ps.realistic_price)) < 0
+            THEN 0.0
+            ELSE AVG(ps.realistic_price * ps.realistic_price)
+                 - (AVG(ps.realistic_price) * AVG(ps.realistic_price))
+          END
         ) AS stddev_price
       FROM product_stats ps
       JOIN products p ON p.id = ps.product_id
@@ -840,7 +842,7 @@ def get_value_ratios(
             p.name AS product_name,
             lp.realistic_price AS sealed_price,
             cs.singles_sum,
-            ROUND(cs.singles_sum / lp.realistic_price, 4) AS value_ratio,
+            ROUND(CAST(cs.singles_sum / lp.realistic_price AS NUMERIC), 4) AS value_ratio,
             cs.priced_components
         FROM products p
         JOIN component_sums cs ON cs.sealed_id = p.id
