@@ -154,7 +154,7 @@ export default function ProductsPage() {
                       onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
                       className="hover:bg-blue-50 cursor-pointer transition-colors"
                     >
-                      <td className="px-4 py-3 font-medium text-gray-900">{item.product_name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{item.product_name}</td>
                       <td className="px-4 py-3 text-right text-gray-600">{formatPrice(item.from_price)}</td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-900">{formatPrice(item.realistic_price)}</td>
                       <td className="px-4 py-3 text-right text-gray-600">{formatPrice(item.price_trend)}</td>

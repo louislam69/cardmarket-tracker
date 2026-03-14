@@ -110,7 +110,7 @@ export default function ValueRatioPage() {
                       onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
                       className="hover:bg-blue-50 cursor-pointer transition-colors"
                     >
-                      <td className="px-4 py-3 font-medium text-gray-900">{item.product_name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{item.product_name}</td>
                       <td className="px-4 py-3 text-right text-gray-700">{fmt(item.sealed_price)}</td>
                       <td className="px-4 py-3 text-right text-gray-700">{fmt(item.singles_sum)}</td>
                       <td className="px-4 py-3 text-right">

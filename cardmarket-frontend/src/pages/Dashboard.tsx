@@ -52,6 +52,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead className="bg-gray-50">
                 <tr>
@@ -68,7 +69,7 @@ export default function Dashboard() {
               <tbody>
                 {sets.map((s, i) => (
                   <tr key={i} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
-                    <td className="px-4 py-3 font-medium">{s.set_name ?? "(ohne Set)"}</td>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap">{s.set_name ?? "(ohne Set)"}</td>
                     <td className="px-4 py-3 text-right">{s.product_count}</td>
                     <td className="px-4 py-3 text-right font-semibold">
                       {s.avg_realistic_price?.toFixed(2) ?? "–"}
@@ -86,6 +87,7 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}
