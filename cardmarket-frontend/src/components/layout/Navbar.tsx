@@ -13,25 +13,29 @@ export default function Navbar() {
   const { pathname } = useLocation();
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-screen-2xl mx-auto px-6 py-3 flex items-center gap-6">
-        <span className="font-bold text-gray-900 text-sm mr-4">Cardmarket Tracker</span>
-        {links.map(({ to, label }) => {
-          const active = pathname === to;
-          return (
-            <Link
-              key={to}
-              to={to}
-              className={
-                active
-                  ? "text-sm font-semibold text-blue-700 border-b-2 border-blue-700 pb-0.5"
-                  : "text-sm font-medium text-gray-600 hover:text-blue-700 transition-colors"
-              }
-            >
-              {label}
-            </Link>
-          );
-        })}
+    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+      <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center gap-8">
+        <span className="font-bold text-blue-700 text-base tracking-tight mr-2">
+          Cardmarket Tracker
+        </span>
+        <div className="flex items-center gap-1">
+          {links.map(({ to, label }) => {
+            const active = pathname === to;
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={
+                  active
+                    ? "px-3 py-1.5 rounded-md text-sm font-semibold text-blue-700 bg-blue-50"
+                    : "px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                }
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );
