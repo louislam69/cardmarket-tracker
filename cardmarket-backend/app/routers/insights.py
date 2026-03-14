@@ -13,6 +13,7 @@ from app.schemas.insights import (
     PercentilePosition,
     OfferDistribution,
     ConditionBreakdown,
+    PaginatedValueRatios,
 )
 
 router = APIRouter(prefix="/insights", tags=["insights"])
@@ -299,14 +300,14 @@ def get_monthly_mom(
       SELECT
         ps.product_id,
         p.name AS product_name,
-        strftime('%Y-%m', c.crawl_timestamp) AS month,
+        SUBSTR(c.crawl_timestamp, 1, 7) AS month,
         AVG(ps.realistic_price) AS avg_realistic_price,
         COUNT(*) AS num_points
       FROM product_stats ps
       JOIN crawls c ON c.id = ps.crawl_id
       JOIN products p ON p.id = ps.product_id
       WHERE ps.realistic_price IS NOT NULL
-      GROUP BY ps.product_id, p.name, strftime('%Y-%m', c.crawl_timestamp)
+      GROUP BY ps.product_id, p.name, SUBSTR(c.crawl_timestamp, 1, 7)
     ),
     mom AS (
       SELECT
@@ -758,3 +759,96 @@ def get_offer_distribution(product_id: int):
         avg_price=agg["avg_price"],
         conditions=conditions,
     )
+
+
+# -------------------------
+# /value-ratios (SQLite)
+# -------------------------
+VALUE_RATIO_SORT_COLUMNS = {
+    "product_name": "product_name",
+    "sealed_price":  "sealed_price",
+    "singles_sum":   "singles_sum",
+    "value_ratio":   "value_ratio",
+}
+
+
+@router.get("/value-ratios", response_model=PaginatedValueRatios)
+def get_value_ratios(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    search: Optional[str] = Query(None, description="Filter nach Produktname (LIKE)"),
+    sort_by: str = Query("value_ratio", description="Spalte für Sortierung"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
+):
+    """
+    Vergleich: Sealed-Preis vs. Summe der Einzelpreise aller verlinkten Komponenten.
+    value_ratio = singles_sum / sealed_price.
+    Nur Produkte mit mind. einer Komponente mit bekanntem Preis werden angezeigt.
+    """
+    base_cte = """
+    WITH latest_prices AS (
+        SELECT
+            ps.product_id,
+            ps.realistic_price,
+            ROW_NUMBER() OVER (
+                PARTITION BY ps.product_id
+                ORDER BY c.crawl_timestamp DESC
+            ) AS rn
+        FROM product_stats ps
+        JOIN crawls c ON c.id = ps.crawl_id
+        WHERE ps.realistic_price IS NOT NULL
+    ),
+    lp AS (
+        SELECT product_id, realistic_price FROM latest_prices WHERE rn = 1
+    ),
+    component_sums AS (
+        SELECT
+            sc.product_id AS sealed_id,
+            SUM(lp2.realistic_price * sc.qty) AS singles_sum,
+            COUNT(*) AS priced_components
+        FROM sealed_contents sc
+        JOIN lp lp2 ON lp2.product_id = sc.linked_product_id
+        GROUP BY sc.product_id
+    )
+    """
+
+    where_clauses = ["1=1"]
+    params: list = []
+
+    if search:
+        where_clauses.append("LOWER(p.name) LIKE '%' || LOWER(?) || '%'")
+        params.append(search)
+
+    where_sql = " AND ".join(where_clauses)
+
+    count_query = base_cte + f"""
+        SELECT COUNT(*) AS total
+        FROM products p
+        JOIN component_sums cs ON cs.sealed_id = p.id
+        JOIN lp ON lp.product_id = p.id
+        WHERE {where_sql}
+    """
+    total = fetch_all(count_query, tuple(params))[0]["total"]
+
+    col = VALUE_RATIO_SORT_COLUMNS.get(sort_by, "value_ratio")
+    direction = "DESC" if sort_order == "desc" else "ASC"
+    order_sql = f"CASE WHEN {col} IS NULL THEN 1 ELSE 0 END, {col} {direction}"
+
+    data_query = base_cte + f"""
+        SELECT
+            p.id AS product_id,
+            p.name AS product_name,
+            lp.realistic_price AS sealed_price,
+            cs.singles_sum,
+            ROUND(cs.singles_sum / lp.realistic_price, 4) AS value_ratio,
+            cs.priced_components
+        FROM products p
+        JOIN component_sums cs ON cs.sealed_id = p.id
+        JOIN lp ON lp.product_id = p.id
+        WHERE {where_sql}
+        ORDER BY {order_sql}
+        LIMIT ? OFFSET ?
+    """
+    rows = fetch_all(data_query, tuple(params + [limit, offset]))
+
+    return PaginatedValueRatios(total=total, limit=limit, offset=offset, items=rows)

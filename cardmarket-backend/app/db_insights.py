@@ -1,48 +1,29 @@
 # app/db_insights.py
-import os
-import sqlite3
-from urllib.parse import urlparse
-from typing import Any, Iterable, Optional, Tuple, List, Dict
+import re
+from typing import Any, Optional, Tuple, List, Dict
+from sqlalchemy import text
+from app.database import engine
 
-def _get_sqlite_path_from_database_url(database_url: str) -> str:
-    # Expected formats:
-    # sqlite:///./app.db
-    # sqlite:///D:/cardmarket-backend/app.db
-    if not database_url.startswith("sqlite"):
-        raise ValueError("DATABASE_URL is not sqlite")
-
-    # remove scheme
-    # sqlite:///./app.db  -> path = /./app.db
-    parsed = urlparse(database_url)
-    path = parsed.path
-
-    # On Windows, parsed.path may start with /D:/...
-    if path.startswith("/") and len(path) >= 3 and path[2] == ":":
-        path = path[1:]
-
-    # If relative path like ./app.db, keep it relative to current working dir
-    if path.startswith("/"):
-        path = path.lstrip("/")
-
-    return path
 
 def fetch_all(query: str, params: Optional[Tuple[Any, ...]] = None) -> List[Dict[str, Any]]:
     """
-    SQLite-only fetch helper.
-    Returns list of dict rows.
+    Dialect-agnostischer SQL-Helper (SQLite + PostgreSQL).
+    Konvertiert positionale ? zu benannten :p0, :p1, ... für SQLAlchemy text().
     """
-    database_url = os.getenv("DATABASE_URL", "sqlite:///./app.db")
-    sqlite_path = _get_sqlite_path_from_database_url(database_url)
-
-    conn = sqlite3.connect(sqlite_path)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
     if params is None:
         params = ()
 
-    cur.execute(query, params)
-    rows = cur.fetchall()
-    conn.close()
+    named_params: Dict[str, Any] = {}
+    counter = [0]
 
-    return [dict(r) for r in rows]
+    def replace(m: re.Match) -> str:
+        key = f"p{counter[0]}"
+        named_params[key] = params[counter[0]]
+        counter[0] += 1
+        return f":{key}"
+
+    named_query = re.sub(r"\?", replace, query)
+
+    with engine.connect() as conn:
+        result = conn.execute(text(named_query), named_params)
+        return [dict(row._mapping) for row in result]

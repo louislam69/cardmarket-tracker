@@ -5,18 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Start the development server
-uvicorn app.main:app --reload
-
-# Run with specific port
-uvicorn app.main:app --reload --port 8000
-
-# Install dependencies
+# Install dependencies (use local venv)
 pip install -r requirements.txt
 
-# Run data import scripts (from repo root)
-python import_csv_runs.py
-python compute_once.py
+# Start the development server
+uvicorn app.main:app --reload --port 8000
+
+# Data pipeline (run from cardmarket-backend/ using .venv/Scripts/python)
+python import_csv_runs.py   # Import CSVs from data/new/, compute realistic_price inline
+python repair_prices.py     # One-time repair: re-parse raw_cells, recompute realistic_price for all crawls
 ```
 
 There is no test suite configured. There are no Docker or CI/CD files.
@@ -36,10 +33,12 @@ FastAPI backend for tracking Cardmarket product prices over time.
 **Key tables** (not managed by ORM — schema is inferred from raw SQL):
 - `products` — Product catalog (ORM-managed)
 - `crawls` — Crawl run timestamps
-- `product_stats` — Price stats per crawl per product
-- `offers` — Individual offers from each crawl
+- `product_stats` — Price stats per crawl per product (`from_price`, `price_trend`, `avg_30d/7d/1d`, `realistic_price`, `offers_used`)
+- `offers` — Individual seller offers per crawl (`item_price`, `shipping_price`, `total_price`, `raw_cells`)
 
-**Data pipeline:** CSV files dropped in `data/new/` → import scripts (root-level `import_*.py`) → SQLite → API. Processed files move to `data/processed/`, failures to `data/failed/`.
+**Data pipeline:** CSV files dropped in `data/new/` → `import_csv_runs.py` → SQLite → API. `realistic_price` and `offers_used` are computed inline during import (no separate script needed). Processed files move to `data/processed/`, failures to `data/failed/`.
+
+**`repair_prices.py`:** One-time script to fix existing DB data when the scraper's price parser had a bug. Re-parses all `offers.raw_cells`, updates `item_price / shipping_price / total_price`, then re-runs `compute_realistic_prices_for_crawl` for every crawl.
 
 **API surface:**
 - `GET/POST/PATCH/DELETE /products` — CRUD

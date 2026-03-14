@@ -239,3 +239,38 @@ export interface OfferDistribution {
 export async function fetchOfferDistribution(productId: number): Promise<OfferDistribution> {
   return apiGet<OfferDistribution>(`/insights/offer-distribution/${productId}`);
 }
+
+// ==== Value Ratio ====
+
+export interface ValueRatioItem {
+  product_id: number;
+  product_name: string;
+  sealed_price: number;
+  singles_sum: number;
+  value_ratio: number;
+  priced_components: number;
+}
+
+export interface ValueRatiosResponse {
+  total: number;
+  limit: number;
+  offset: number;
+  items: ValueRatioItem[];
+}
+
+export async function fetchValueRatios(
+  limit = 50,
+  offset = 0,
+  search?: string,
+  sortBy = "value_ratio",
+  sortOrder: "asc" | "desc" = "desc",
+): Promise<ValueRatiosResponse> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+    sort_by: sortBy,
+    sort_order: sortOrder,
+  });
+  if (search) params.set("search", search);
+  return apiGet<ValueRatiosResponse>(`/insights/value-ratios?${params.toString()}`);
+}

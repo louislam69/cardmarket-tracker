@@ -8,6 +8,7 @@ export default function Navbar() {
       <Link to="/top-movers" style={{ marginRight: "12px" }}>Top Movers</Link>
       <Link to="/monthly" style={{ marginRight: "12px" }}>Monatsvergleich</Link>
       <Link to="/volatility" style={{ marginRight: "12px" }}>Volatilität</Link>
+      <Link to="/value-ratio" style={{ marginRight: "12px" }}>Sealed vs. Singles</Link>
     </nav>
   );
 }

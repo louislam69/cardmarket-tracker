@@ -1,0 +1,6 @@
+Alembic migrations for Cardmarket Tracker Backend.
+
+Usage:
+  alembic upgrade head     # Apply all pending migrations
+  alembic downgrade -1     # Revert last migration
+  alembic revision --autogenerate -m "description"  # Generate new migration

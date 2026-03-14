@@ -19,7 +19,7 @@ MAX_DELAY_S = 14
 # Wie oft pro URL erneut versuchen (zusätzlich zum ersten Versuch)
 RETRY_PER_URL = 2
 
-EURO_RE = re.compile(r"(\d+[.,]\d+)\s*€")
+EURO_RE = re.compile(r"(\d+(?:[.,]\d+)*)\s*€")
 
 
 def read_urls(path: str) -> List[str]:

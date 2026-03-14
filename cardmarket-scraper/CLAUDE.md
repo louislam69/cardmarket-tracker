@@ -65,4 +65,8 @@ Each crawl creates timestamped files. Historical runs are stored under `runs/cra
 
 ### Price parsing
 
-`normalize_price()` uses a regex for `€`-suffixed values. `parse_price_eur()` handles both German (comma decimal, dot thousands) and international formats. The two last `€` values in an offer row are treated as item price and shipping respectively.
+Two separate parsers:
+- `normalize_price()` — used for individual offer prices (item/shipping). Uses `EURO_RE = re.compile(r"(\d+(?:[.,]\d+)*)\s*€")`. The `(?:[.,]\d+)*` pattern handles German thousands separators (e.g. `1.800,00 €` → `1800.0`). **Bug history:** the original regex `r"(\d+[.,]\d+)\s*€"` only matched one separator group, causing prices ≥ 1,000 € to be parsed incorrectly (e.g. `1.800,00 €` → `800.0`). Fixed 2026-03-14; run `repair_prices.py` in the backend to correct historical data.
+- `parse_price_eur()` — used for product-level stats (`from_price`, `price_trend`, averages). Strips `€`, removes `.` (thousands), replaces `,` with `.`. Correct for all price ranges.
+
+The two last `€` values in an offer row are treated as item price and shipping respectively.

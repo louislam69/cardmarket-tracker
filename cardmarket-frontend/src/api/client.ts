@@ -1,5 +1,6 @@
-// Wir nutzen jetzt nur noch relative Pfade, Vite proxied /api → FastAPI
-const API_BASE_URL = "/api";
+// Lokal: Vite proxied /api → FastAPI (VITE_API_BASE_URL nicht gesetzt)
+// Produktion: VITE_API_BASE_URL=https://backend.railway.app (kein /api-Prefix nötig)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`);

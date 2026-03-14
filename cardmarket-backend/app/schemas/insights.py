@@ -164,3 +164,21 @@ class OfferDistribution(BaseModel):
     p75_price: float
     avg_price: float
     conditions: List[ConditionBreakdown]
+
+
+# ==== Value Ratio ====
+
+class ValueRatioItem(BaseModel):
+    product_id: int
+    product_name: str
+    sealed_price: float
+    singles_sum: float
+    value_ratio: float
+    priced_components: int
+
+
+class PaginatedValueRatios(BaseModel):
+    total: int
+    limit: int
+    offset: int
+    items: List[ValueRatioItem]

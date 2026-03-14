@@ -50,6 +50,7 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
   const [distribution, setDistribution] = useState<OfferDistribution | null>(null);
   const [percentile, setPercentile] = useState<PercentilePosition | null>(null);
   const [releaseDate, setReleaseDate] = useState<string | null>(null);
+  const [cardmarketUrl, setCardmarketUrl] = useState<string | null>(null);
   const [sealedContents, setSealedContents] = useState<SealedContentsResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -60,6 +61,7 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
     setDistribution(null);
     setPercentile(null);
     setReleaseDate(null);
+    setCardmarketUrl(null);
     setSealedContents(null);
 
     Promise.allSettled([
@@ -72,14 +74,38 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
       if (histRes.status === "fulfilled") setHistory(histRes.value);
       if (distRes.status === "fulfilled") setDistribution(distRes.value);
       if (pctRes.status === "fulfilled") setPercentile(pctRes.value);
-      if (productRes.status === "fulfilled") setReleaseDate(productRes.value.release_date);
+      if (productRes.status === "fulfilled") {
+        setReleaseDate(productRes.value.release_date);
+        setCardmarketUrl(productRes.value.cardmarket_url ?? null);
+      }
       if (sealedRes.status === "fulfilled") setSealedContents(sealedRes.value);
       setLoading(false);
     });
   }, [productId]);
 
+  const titleNode = (
+    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      {productName}
+      {cardmarketUrl && (
+        <a
+          href={cardmarketUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Auf Cardmarket ansehen"
+          style={{ display: "flex", alignItems: "center", color: "#2563eb", flexShrink: 0 }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </a>
+      )}
+    </span>
+  );
+
   return (
-    <Modal open={productId !== null} onClose={onClose} title={productName}>
+    <Modal open={productId !== null} onClose={onClose} title={titleNode}>
       {loading && <div style={{ color: "#6b7280", padding: "24px 0" }}>Lade Daten…</div>}
 
       {!loading && (

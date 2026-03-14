@@ -19,6 +19,15 @@ KEYWORD_BLACKLIST = [
     "ohne inhalt", "keine karten", "damaged", "opened", "resealed",
 ]
 
+# Dialect detection — set once at module load
+_DB_URL = os.getenv("DATABASE_URL", "")
+_IS_PG = _DB_URL.startswith(("postgresql", "postgres://", "postgres+"))
+
+
+def _sql(query: str) -> str:
+    """Konvertiert ? → %s für PostgreSQL."""
+    return query.replace("?", "%s") if _IS_PG else query
+
 
 def parse_eur_text(s: str | float | int | None) -> float | None:
     """Parst '1.234,56 €' / '123,45 €' robust zu float."""
@@ -77,7 +86,7 @@ def find_run_pairs(folder: Path) -> List[Tuple[str, Path, Path]]:
 
 
 # =========================
-# SQLITE CONNECT
+# DB CONNECT
 # =========================
 
 def _sqlite_path_from_database_url(database_url: str, base_dir: Path) -> Path:
@@ -103,14 +112,20 @@ def _sqlite_path_from_database_url(database_url: str, base_dir: Path) -> Path:
     raise ValueError(f"Unsupported DATABASE_URL for sqlite import: {database_url}")
 
 
-def get_connection() -> sqlite3.Connection:
+def get_connection():
     """
-    Connect to the SAME sqlite DB as the FastAPI backend (DATABASE_URL=sqlite:///./app.db).
-    If DATABASE_URL is missing, default to ./app.db in this folder.
+    Verbindet zur DB (SQLite oder PostgreSQL) abhängig von DATABASE_URL.
     """
-    base_dir = Path(__file__).resolve().parent
-    db_url = os.getenv("DATABASE_URL") or os.getenv("DATABASE_URI")
+    db_url = os.getenv("DATABASE_URL") or os.getenv("DATABASE_URI") or ""
 
+    if _IS_PG:
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        conn.autocommit = False
+        return conn
+
+    # SQLite-Pfad
+    base_dir = Path(__file__).resolve().parent
     if db_url and db_url.startswith("sqlite"):
         db_path = _sqlite_path_from_database_url(db_url, base_dir)
     else:
@@ -123,14 +138,17 @@ def get_connection() -> sqlite3.Connection:
 
 
 # =========================
-# DB SCHEMA (minimal, SQLite-compatible)
+# DB SCHEMA
 # =========================
 
-def ensure_tables(conn: sqlite3.Connection):
+def ensure_tables(conn):
     """
-    Minimales Schema für CSV-Import (SQLite).
-    Wenn dein Backend die Tabellen schon hat: bleibt einfach bestehen.
+    Für SQLite: legt Tabellen an falls nicht vorhanden.
+    Für PostgreSQL: no-op (Alembic hat die Tabellen bereits erstellt).
     """
+    if _IS_PG:
+        return
+
     cur = conn.cursor()
 
     cur.execute("""
@@ -188,22 +206,23 @@ def ensure_tables(conn: sqlite3.Connection):
 
 
 # =========================
-# IMPORT LOGIC (SQLite)
+# IMPORT LOGIC
 # =========================
 
-def upsert_crawl(conn: sqlite3.Connection, crawl_ts: datetime) -> int:
+def upsert_crawl(conn, crawl_ts: datetime) -> int:
     ts = crawl_ts.isoformat(sep=" ", timespec="seconds")
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(_sql("""
         INSERT INTO crawls (crawl_timestamp)
         VALUES (?)
         ON CONFLICT(crawl_timestamp) DO UPDATE SET crawl_timestamp=excluded.crawl_timestamp
-    """, (ts,))
+    """), (ts,))
     conn.commit()
 
-    cur.execute("SELECT id FROM crawls WHERE crawl_timestamp = ?", (ts,))
+    cur.execute(_sql("SELECT id FROM crawls WHERE crawl_timestamp = ?"), (ts,))
     return int(cur.fetchone()[0])
+
 
 def upsert_products(conn, df_products: pd.DataFrame) -> Dict[str, int]:
     """
@@ -228,15 +247,14 @@ def upsert_products(conn, df_products: pd.DataFrame) -> Dict[str, int]:
             name = str(name).strip() or None
         rows.append((name, cm_url))
 
-    # robustes Upsert (funktioniert, wenn cardmarket_url UNIQUE ist – was bei dir sehr wahrscheinlich der Fall ist)
-    cur.executemany("""
+    cur.executemany(_sql("""
     INSERT INTO products (name, cardmarket_url, is_active)
-    VALUES (?, ?, 1)
+    VALUES (?, ?, TRUE)
     ON CONFLICT(cardmarket_url) DO UPDATE SET
         name = excluded.name,
-        is_active = 1,
+        is_active = TRUE,
         updated_at = CURRENT_TIMESTAMP
-""", rows)
+"""), rows)
     conn.commit()
 
     # 2) Mapping url -> id laden
@@ -244,7 +262,11 @@ def upsert_products(conn, df_products: pd.DataFrame) -> Dict[str, int]:
     if not urls:
         return {}
 
-    placeholders = ",".join(["?"] * len(urls))
+    if _IS_PG:
+        placeholders = ",".join(["%s"] * len(urls))
+    else:
+        placeholders = ",".join(["?"] * len(urls))
+
     cur.execute(f"""
         SELECT id, cardmarket_url
         FROM products
@@ -253,7 +275,8 @@ def upsert_products(conn, df_products: pd.DataFrame) -> Dict[str, int]:
 
     return {row[1]: int(row[0]) for row in cur.fetchall()}
 
-def insert_product_stats(conn: sqlite3.Connection, crawl_id: int, df_products: pd.DataFrame, url_to_pid: Dict[str, int]):
+
+def insert_product_stats(conn, crawl_id: int, df_products: pd.DataFrame, url_to_pid: Dict[str, int]):
     cur = conn.cursor()
     rows = []
     for _, r in df_products.iterrows():
@@ -272,7 +295,7 @@ def insert_product_stats(conn: sqlite3.Connection, crawl_id: int, df_products: p
             parse_eur_text(r.get("avg_1d", None)),
         ))
 
-    cur.executemany("""
+    cur.executemany(_sql("""
         INSERT INTO product_stats (
             crawl_id, product_id, available_items,
             from_price, price_trend, avg_30d, avg_7d, avg_1d
@@ -285,11 +308,11 @@ def insert_product_stats(conn: sqlite3.Connection, crawl_id: int, df_products: p
             avg_30d = excluded.avg_30d,
             avg_7d = excluded.avg_7d,
             avg_1d = excluded.avg_1d
-    """, rows)
+    """), rows)
     conn.commit()
 
 
-def insert_offers(conn: sqlite3.Connection, crawl_id: int, df_offers: pd.DataFrame, url_to_pid: Dict[str, int]):
+def insert_offers(conn, crawl_id: int, df_offers: pd.DataFrame, url_to_pid: Dict[str, int]):
     cur = conn.cursor()
     rows = []
     for _, r in df_offers.iterrows():
@@ -333,15 +356,16 @@ def insert_offers(conn: sqlite3.Connection, crawl_id: int, df_offers: pd.DataFra
             r.get("raw_cells", None),
         ))
 
-    cur.executemany("""
+    cur.executemany(_sql("""
         INSERT INTO offers (
             crawl_id, product_id, seller, ratings, comment,
             item_price, shipping_price, total_price, qty,
             price_text, raw_cells
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, rows)
+    """), rows)
     conn.commit()
+
 
 def _median(values: list) -> float:
     n = len(values)
@@ -352,12 +376,12 @@ def _median(values: list) -> float:
 def compute_realistic_prices_for_crawl(conn, crawl_id: int):
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(_sql("""
         SELECT product_id, total_price, comment
         FROM offers
         WHERE crawl_id = ? AND total_price IS NOT NULL
         ORDER BY product_id, total_price ASC
-    """, (crawl_id,))
+    """), (crawl_id,))
 
     by_product: Dict[int, List[tuple]] = {}
     for product_id, total_price, comment in cur.fetchall():
@@ -400,14 +424,15 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
         realistic_price = _median(window)
         updates.append((realistic_price, len(window), crawl_id, product_id))
 
-    cur.executemany("""
+    cur.executemany(_sql("""
         UPDATE product_stats
         SET realistic_price = ?, offers_used = ?
         WHERE crawl_id = ? AND product_id = ?
-    """, updates)
+    """), updates)
     conn.commit()
 
     print(f"[FILTER] keyword={n_keyword}, outlier={n_outlier}, adjusted_skip={n_adjusted}")
+
 
 def import_one_run(products_csv: Path, offers_csv: Path):
     dfp = read_csv_fallback(products_csv)
@@ -432,15 +457,23 @@ def import_one_run(products_csv: Path, offers_csv: Path):
 
         cur = conn.cursor()
         cur.execute(
-            "SELECT COUNT(*) FROM product_stats WHERE crawl_id=? AND realistic_price IS NOT NULL",
+            _sql("SELECT COUNT(*) FROM product_stats WHERE crawl_id=? AND realistic_price IS NOT NULL"),
             (crawl_id,)
         )
         print(f"[RUN] realistic_price filled rows: {cur.fetchone()[0]}")
 
     finally:
         conn.close()
-        
-def ensure_product_stats_columns(conn: sqlite3.Connection):
+
+
+def ensure_product_stats_columns(conn):
+    """
+    Für SQLite: fügt Spalten hinzu falls nicht vorhanden.
+    Für PostgreSQL: no-op (Alembic-Migration enthält bereits die Spalten).
+    """
+    if _IS_PG:
+        return
+
     cur = conn.cursor()
     cur.execute("PRAGMA table_info(product_stats);")
     cols = {row[1] for row in cur.fetchall()}
