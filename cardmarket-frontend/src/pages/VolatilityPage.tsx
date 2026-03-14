@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchVolatility, type VolatilityItem } from "../api/insights";
+import ProductDetailModal from "../components/ui/ProductDetailModal";
 
 function CvBadge({ cv }: { cv: number }) {
   if (cv >= 20) return <span className="inline-block px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-xs font-semibold">Hoch volatil</span>;
@@ -11,15 +12,18 @@ export default function VolatilityPage() {
   const [items, setItems] = useState<VolatilityItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(50);
   const [offset, setOffset] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState<{ id: number; name: string } | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     fetchVolatility(limit, offset, search || undefined)
       .then((res) => { setItems(res.items); setTotal(res.total); })
-      .catch(console.error)
+      .catch(() => setError("Fehler beim Laden der Daten"))
       .finally(() => setLoading(false));
   }, [limit, offset, search]);
 
@@ -47,9 +51,14 @@ export default function VolatilityPage() {
         <span className="text-sm text-gray-400 ml-auto">{total} Produkte</span>
       </div>
 
-      {loading ? (
-        <div className="text-gray-500 text-sm py-4">Lade…</div>
-      ) : (
+      {error && <p className="text-red-700 mb-3 text-sm">{error}</p>}
+      {loading && <p className="text-gray-500 text-sm py-4">Lade…</p>}
+
+      {!loading && !error && items.length === 0 && (
+        <p className="text-gray-500 text-sm">Keine Daten. Nur Produkte mit ≥ 3 Crawls werden angezeigt.</p>
+      )}
+
+      {!loading && items.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <table className="w-full text-sm border-collapse">
             <thead className="bg-gray-50">
@@ -63,7 +72,11 @@ export default function VolatilityPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {items.map((item) => (
-                <tr key={item.product_id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={item.product_id}
+                  onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
+                  className="hover:bg-blue-50 cursor-pointer transition-colors"
+                >
                   <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{item.product_name}</td>
                   <td className="px-4 py-3 text-right text-gray-700">{item.avg_realistic_price.toFixed(2)}</td>
                   <td className="px-4 py-3 text-right text-gray-600">{item.stddev_price.toFixed(2)}</td>
@@ -85,6 +98,12 @@ export default function VolatilityPage() {
         <span className="text-sm text-gray-500">{offset + 1}–{Math.min(offset + limit, total)} von {total}</span>
         <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total} className={btnCls}>Weiter →</button>
       </div>
+
+      <ProductDetailModal
+        productId={selectedProduct?.id ?? null}
+        productName={selectedProduct?.name ?? ""}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   );
 }

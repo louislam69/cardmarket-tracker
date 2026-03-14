@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchMonthlyMoM, type MonthlyMoMItem } from "../api/insights";
+import ProductDetailModal from "../components/ui/ProductDetailModal";
 
 type Direction = "up" | "down" | "both";
 
@@ -11,6 +12,7 @@ export default function MonthlyPage() {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(50);
   const [offset, setOffset] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState<{ id: number; name: string } | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -66,7 +68,11 @@ export default function MonthlyPage() {
                 {items.map((item, i) => {
                   const positive = item.rel_change_pct >= 0;
                   return (
-                    <tr key={`${item.product_id}-${item.month}-${i}`} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={`${item.product_id}-${item.month}-${i}`}
+                      onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
+                      className="hover:bg-blue-50 cursor-pointer transition-colors"
+                    >
                       <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{item.product_name}</td>
                       <td className="px-4 py-3 text-right text-gray-700">{item.month}</td>
                       <td className="px-4 py-3 text-right text-gray-400">{item.prev_month}</td>
@@ -95,6 +101,12 @@ export default function MonthlyPage() {
         <span className="text-sm text-gray-500">{offset + 1}–{Math.min(offset + limit, total)} von {total}</span>
         <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total} className={btnCls}>Weiter →</button>
       </div>
+
+      <ProductDetailModal
+        productId={selectedProduct?.id ?? null}
+        productName={selectedProduct?.name ?? ""}
+        onClose={() => setSelectedProduct(null)}
+      />
     </div>
   );
 }
