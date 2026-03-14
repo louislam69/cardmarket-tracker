@@ -30,7 +30,7 @@ export default function PriceHistoryChart({ data }: Props) {
           tick={{ fontSize: 11 }}
           width={65}
         />
-        <Tooltip formatter={(v: number) => v.toFixed(2) + " €"} />
+        <Tooltip formatter={(v) => (typeof v === "number" ? v.toFixed(2) + " €" : v)} />
         <Legend />
         <Line
           type="monotone"
