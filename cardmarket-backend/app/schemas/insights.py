@@ -20,6 +20,7 @@ class LatestPrice(BaseModel):
     avg_1d: Optional[float]
     realistic_price: Optional[float]
     offers_used: Optional[int]
+    release_date: Optional[date]
 
 
 class PaginatedLatestPrices(BaseModel):

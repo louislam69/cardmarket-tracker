@@ -21,6 +21,19 @@ router = APIRouter(prefix="/insights", tags=["insights"])
 # -------------------------
 # /latest-prices (SQLite)
 # -------------------------
+LATEST_PRICES_SORT_COLUMNS = {
+    "product_name":    "product_name",
+    "realistic_price": "realistic_price",
+    "from_price":      "from_price",
+    "price_trend":     "price_trend",
+    "avg_30d":         "avg_30d",
+    "avg_7d":          "avg_7d",
+    "avg_1d":          "avg_1d",
+    "last_crawled_at": "last_crawled_at",
+    "release_date":    "release_date",
+}
+
+
 @router.get("/latest-prices", response_model=PaginatedLatestPrices)
 def get_latest_prices(
     limit: int = Query(50, ge=1, le=200),
@@ -28,6 +41,8 @@ def get_latest_prices(
     min_price: Optional[float] = Query(None),
     max_price: Optional[float] = Query(None),
     search: Optional[str] = Query(None, description="Filter nach Produktname (LIKE)"),
+    sort_by: str = Query("product_name", description="Spalte für Sortierung"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
 ):
     """
     Liefert pro Produkt den letzten Crawl mit realistischer Preisinfo.
@@ -39,6 +54,7 @@ def get_latest_prices(
       SELECT
         ps.product_id,
         p.name AS product_name,
+        p.release_date AS release_date,
         c.crawl_timestamp AS last_crawled_at,
         ps.available_items,
         ps.from_price,
@@ -83,10 +99,16 @@ def get_latest_prices(
     """
     total = fetch_all(count_query, tuple(params))[0]["total"]
 
+    col = LATEST_PRICES_SORT_COLUMNS.get(sort_by, "product_name")
+    direction = "DESC" if sort_order == "desc" else "ASC"
+    # NULLs always last regardless of direction
+    order_sql = f"CASE WHEN {col} IS NULL THEN 1 ELSE 0 END, {col} {direction}"
+
     data_query = base_cte + f"""
         SELECT
             product_id,
             product_name,
+            release_date,
             last_crawled_at,
             available_items,
             from_price,
@@ -98,7 +120,7 @@ def get_latest_prices(
             offers_used
         FROM latest
         WHERE {where_sql}
-        ORDER BY product_name ASC
+        ORDER BY {order_sql}
         LIMIT ? OFFSET ?
     """
     rows = fetch_all(data_query, tuple(params + [limit, offset]))

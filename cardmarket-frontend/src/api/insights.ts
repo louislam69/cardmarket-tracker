@@ -29,6 +29,7 @@ export type LatestPriceItem = {
   avg_7d: number | null;
   avg_1d: number | null;
   offers_used: number | null;
+  release_date: string | null;
 };
 
 export type LatestPricesResponse = {
@@ -44,11 +45,15 @@ export async function fetchLatestPrices(
   search?: string,
   minPrice?: number,
   maxPrice?: number,
+  sortBy?: string,
+  sortOrder?: "asc" | "desc",
 ): Promise<LatestPricesResponse> {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
   if (search) params.set("search", search);
   if (minPrice !== undefined) params.set("min_price", String(minPrice));
   if (maxPrice !== undefined) params.set("max_price", String(maxPrice));
+  if (sortBy) params.set("sort_by", sortBy);
+  if (sortOrder) params.set("sort_order", sortOrder);
   return apiGet<LatestPricesResponse>(`/insights/latest-prices?${params.toString()}`);
 }
 

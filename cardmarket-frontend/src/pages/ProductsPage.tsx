@@ -8,6 +8,8 @@ import ProductDetailModal from "../components/ui/ProductDetailModal";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
+type SortOrder = "asc" | "desc";
+
 function formatPrice(value: number | null): string {
   if (value === null || value === undefined) return "–";
   return value.toFixed(2) + " €";
@@ -20,6 +22,49 @@ function formatDate(value: string): string {
   return d.toLocaleString("de-DE");
 }
 
+function formatReleaseDate(value: string | null): string {
+  if (!value) return "–";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("de-DE");
+}
+
+function SortableHeader({
+  label,
+  column,
+  sortBy,
+  sortOrder,
+  onSort,
+  align = "left",
+}: {
+  label: string;
+  column: string;
+  sortBy: string;
+  sortOrder: SortOrder;
+  onSort: (col: string) => void;
+  align?: "left" | "right";
+}) {
+  const active = sortBy === column;
+  const indicator = active ? (sortOrder === "asc" ? " ▲" : " ▼") : " ↕";
+  return (
+    <th
+      onClick={() => onSort(column)}
+      style={{
+        borderBottom: "2px solid #e5e7eb",
+        textAlign: align,
+        padding: "8px 10px",
+        cursor: "pointer",
+        userSelect: "none",
+        whiteSpace: "nowrap",
+        color: active ? "#1d4ed8" : undefined,
+      }}
+    >
+      {label}
+      <span style={{ color: active ? "#1d4ed8" : "#9ca3af", fontSize: "0.75rem" }}>{indicator}</span>
+    </th>
+  );
+}
+
 export default function ProductsPage() {
   const [data, setData] = useState<LatestPricesResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,8 +75,20 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [sortBy, setSortBy] = useState("product_name");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const [selectedProduct, setSelectedProduct] = useState<{ id: number; name: string } | null>(null);
+
+  function handleSort(column: string) {
+    if (column === sortBy) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+    setOffset(0);
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -42,6 +99,8 @@ export default function ProductsPage() {
       search || undefined,
       minPrice !== "" ? Number(minPrice) : undefined,
       maxPrice !== "" ? Number(maxPrice) : undefined,
+      sortBy,
+      sortOrder,
     )
       .then(setData)
       .catch((err) => {
@@ -49,7 +108,7 @@ export default function ProductsPage() {
         setError("Fehler beim Laden der Produkte");
       })
       .finally(() => setLoading(false));
-  }, [limit, offset, search, minPrice, maxPrice]);
+  }, [limit, offset, search, minPrice, maxPrice, sortBy, sortOrder]);
 
   return (
     <div style={{ padding: "1.5rem" }}>
@@ -105,19 +164,20 @@ export default function ProductsPage() {
       {!loading && data && data.items.length > 0 && (
         <>
           <p style={{ fontSize: "0.8rem", color: "#9ca3af", marginBottom: "6px" }}>
-            Zeile anklicken für Preishistorie, Angebots-Verteilung und Kaufsignal.
+            Zeile anklicken für Preishistorie, Angebots-Verteilung und Kaufsignal. Spaltenköpfe anklicken zum Sortieren.
           </p>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
             <thead>
               <tr style={{ background: "#f9fafb" }}>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "left", padding: "8px 10px" }}>Produkt</th>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Ab €</th>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Realist. €</th>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Trend €</th>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Ø 30d</th>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Ø 7d</th>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Ø 1d</th>
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Letzter Crawl</th>
+                <SortableHeader label="Produkt" column="product_name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="left" />
+                <SortableHeader label="Ab €" column="from_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                <SortableHeader label="Realist. €" column="realistic_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                <SortableHeader label="Trend €" column="price_trend" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                <SortableHeader label="Ø 30d" column="avg_30d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                <SortableHeader label="Ø 7d" column="avg_7d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                <SortableHeader label="Ø 1d" column="avg_1d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                <SortableHeader label="Letzter Crawl" column="last_crawled_at" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                <SortableHeader label="Erscheinungsdatum" column="release_date" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
                 <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Angebote</th>
               </tr>
             </thead>
@@ -139,6 +199,9 @@ export default function ProductsPage() {
                   <td style={{ padding: "7px 10px", textAlign: "right" }}>{formatPrice(item.avg_1d)}</td>
                   <td style={{ padding: "7px 10px", textAlign: "right", color: "#6b7280", fontSize: "0.8rem" }}>
                     {formatDate(item.last_crawled_at)}
+                  </td>
+                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#6b7280", fontSize: "0.8rem" }}>
+                    {formatReleaseDate(item.release_date)}
                   </td>
                   <td style={{ padding: "7px 10px", textAlign: "right", color: "#6b7280" }}>
                     {item.offers_used ?? "–"}
