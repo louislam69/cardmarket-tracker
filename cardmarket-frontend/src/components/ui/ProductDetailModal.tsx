@@ -84,7 +84,7 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
   }, [productId]);
 
   const titleNode = (
-    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+    <span className="flex items-center gap-2">
       {productName}
       {cardmarketUrl && (
         <a
@@ -92,7 +92,7 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
           target="_blank"
           rel="noopener noreferrer"
           title="Auf Cardmarket ansehen"
-          style={{ display: "flex", alignItems: "center", color: "#2563eb", flexShrink: 0 }}
+          className="flex items-center text-blue-600 hover:text-blue-800 flex-shrink-0"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -106,28 +106,17 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
 
   return (
     <Modal open={productId !== null} onClose={onClose} title={titleNode}>
-      {loading && <div style={{ color: "#6b7280", padding: "24px 0" }}>Lade Daten…</div>}
+      {loading && <div className="text-gray-500 py-6">Lade Daten…</div>}
 
       {!loading && (
         <>
           {percentile && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                marginBottom: "20px",
-                padding: "10px 14px",
-                background: "#f9fafb",
-                borderRadius: "6px",
-                flexWrap: "wrap",
-              }}
-            >
+            <div className="flex items-center gap-3 mb-5 px-3.5 py-2.5 bg-gray-50 rounded-lg flex-wrap">
               <BuySignalBadge percentile={percentile.percentile_position} />
-              <span style={{ fontSize: "0.85rem", color: "#374151" }}>
+              <span className="text-sm text-gray-700">
                 Aktuell: <strong>{percentile.current_price.toFixed(2)} €</strong>
               </span>
-              <span style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+              <span className="text-sm text-gray-500">
                 Historisch: {percentile.historical_min.toFixed(2)} – {percentile.historical_max.toFixed(2)} €
                 &nbsp;|&nbsp;Ø {percentile.historical_avg.toFixed(2)} €
                 &nbsp;|&nbsp;{percentile.crawl_count} Crawls
@@ -136,27 +125,23 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
           )}
 
           {releaseDate && (
-            <div style={{ fontSize: "0.85rem", color: "#6b7280", marginBottom: "16px" }}>
-              Erscheinungsdatum: <strong style={{ color: "#374151" }}>{formatReleaseDate(releaseDate)}</strong>
+            <div className="text-sm text-gray-500 mb-4">
+              Erscheinungsdatum: <strong className="text-gray-700">{formatReleaseDate(releaseDate)}</strong>
             </div>
           )}
 
           {sealedContents && sealedContents.items.length > 0 && (
-            <div style={{ marginBottom: "16px" }}>
-              <h4 style={{ margin: "0 0 8px", fontSize: "0.9rem", color: "#374151" }}>Inhalt</h4>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">Inhalt</h4>
+              <table className="w-full text-xs border-collapse">
                 <tbody>
                   {sealedContents.items.map((item) => (
-                    <tr key={item.component_type} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                      <td style={{ padding: "4px 8px", color: "#6b7280" }}>
+                    <tr key={item.component_type} className="border-b border-gray-100">
+                      <td className="px-2 py-1 text-gray-500">
                         {COMPONENT_LABELS[item.component_type] ?? item.component_type}
                       </td>
-                      <td style={{ padding: "4px 8px", textAlign: "right", fontWeight: 600 }}>
-                        {item.qty}×
-                      </td>
-                      <td style={{ padding: "4px 8px", color: "#6b7280" }}>
-                        {item.linked_product_name ?? ""}
-                      </td>
+                      <td className="px-2 py-1 text-right font-semibold">{item.qty}×</td>
+                      <td className="px-2 py-1 text-gray-500">{item.linked_product_name ?? ""}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -165,20 +150,20 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
           )}
 
           {history && history.length > 0 && (
-            <div style={{ marginBottom: "24px" }}>
-              <h4 style={{ margin: "0 0 8px" }}>Preisverlauf</h4>
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">Preisverlauf</h4>
               <PriceHistoryChart data={history} />
             </div>
           )}
 
           {distribution && (
-            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "16px" }}>
+            <div className="border-t border-gray-200 pt-4">
               <OfferDistributionPanel data={distribution} />
             </div>
           )}
 
           {!history && !distribution && !percentile && (
-            <div style={{ color: "#6b7280" }}>Keine Daten verfügbar.</div>
+            <div className="text-gray-500">Keine Daten verfügbar.</div>
           )}
         </>
       )}

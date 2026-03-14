@@ -7,10 +7,9 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-
-      <main style={{ padding: "16px" }}>
+      <main className="p-6 max-w-screen-2xl mx-auto">
         {children}
       </main>
     </div>

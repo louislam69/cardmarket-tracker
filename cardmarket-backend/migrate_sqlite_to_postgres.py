@@ -114,7 +114,7 @@ def reset_sequences(pg_conn):
         # Sequence-Name: PostgreSQL-Konvention ist <table>_id_seq
         seq_name = f"{table}_id_seq"
         cur.execute(f"SELECT setval('{seq_name}', %s)", (max_id,))
-        print(f"  Sequence {seq_name} → {max_id}")
+        print(f"  Sequence {seq_name} -> {max_id}")
 
     pg_conn.commit()
 
@@ -129,8 +129,8 @@ def main():
         print(f"ERROR: SQLite-Datei nicht gefunden: {sqlite_path}")
         sys.exit(1)
 
-    print(f"Quelle:  SQLite  → {sqlite_path}")
-    print(f"Ziel:    PostgreSQL → {PG_URL.split('@')[-1]}")
+    print(f"Quelle:  SQLite  -> {sqlite_path}")
+    print(f"Ziel:    PostgreSQL -> {PG_URL.split('@')[-1]}")
     print()
 
     sqlite_conn = get_sqlite_conn(str(sqlite_path))
@@ -150,7 +150,7 @@ def main():
     pg_conn.close()
 
     print()
-    print(f"✅ Migration abgeschlossen. {total_rows} Zeilen total migriert.")
+    print(f"Migration abgeschlossen. {total_rows} Zeilen total migriert.")
     print()
     print("Nächste Schritte:")
     print("  1. Backend auf Railway deployen")

@@ -10,55 +10,33 @@ export default function OfferDistributionPanel({ data }: Props) {
 
   return (
     <div>
-      <h4 style={{ margin: "0 0 8px" }}>
+      <h4 className="text-sm font-semibold text-gray-700 mb-2">
         Preisverteilung — {data.offer_count} Angebote von {data.seller_count} Verkäufern
-        <span style={{ fontWeight: 400, color: "#6b7280", fontSize: "0.85rem", marginLeft: "8px" }}>
+        <span className="font-normal text-gray-500 text-xs ml-2">
           (Gesamt: {data.total_qty} Stück)
         </span>
       </h4>
 
       {/* Price range bar */}
-      <div
-        style={{
-          position: "relative",
-          height: "24px",
-          background: "#e5e7eb",
-          borderRadius: "4px",
-          margin: "12px 0 4px",
-        }}
-      >
+      <div className="relative h-6 bg-gray-200 rounded mt-3 mb-1">
         {/* IQR box */}
         <div
+          className="absolute h-full bg-blue-200 rounded-sm"
           style={{
-            position: "absolute",
             left: `${pct(data.p25_price)}%`,
             width: `${Math.max(pct(data.p75_price) - pct(data.p25_price), 2)}%`,
-            height: "100%",
-            background: "#bfdbfe",
-            borderRadius: "2px",
           }}
         />
         {/* Median marker */}
         <div
+          className="absolute w-0.5 h-full bg-blue-600"
           style={{
-            position: "absolute",
             left: `${pct(data.median_price)}%`,
             transform: "translateX(-50%)",
-            width: "3px",
-            height: "100%",
-            background: "#2563eb",
           }}
         />
       </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: "0.78rem",
-          color: "#6b7280",
-          marginBottom: "16px",
-        }}
-      >
+      <div className="flex justify-between text-xs text-gray-500 mb-4">
         <span>Min: {data.min_price.toFixed(2)} €</span>
         <span>P25: {data.p25_price.toFixed(2)} €</span>
         <span>Median: {data.median_price.toFixed(2)} €</span>
@@ -67,19 +45,14 @@ export default function OfferDistributionPanel({ data }: Props) {
       </div>
 
       {/* Condition breakdown */}
-      <h4 style={{ margin: "0 0 8px" }}>Zustand-Aufschlüsselung</h4>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-        <thead>
-          <tr style={{ background: "#f9fafb" }}>
+      <h4 className="text-sm font-semibold text-gray-700 mb-2">Zustand-Aufschlüsselung</h4>
+      <table className="w-full text-sm border-collapse">
+        <thead className="bg-gray-50">
+          <tr>
             {["Zustand", "Anzahl", "Min €", "Ø €", "Max €"].map((h) => (
               <th
                 key={h}
-                style={{
-                  textAlign: h === "Zustand" ? "left" : "right",
-                  padding: "6px 10px",
-                  borderBottom: "1px solid #e5e7eb",
-                  fontWeight: 600,
-                }}
+                className={`px-2.5 py-1.5 border-b border-gray-200 text-xs font-semibold text-gray-600 ${h === "Zustand" ? "text-left" : "text-right"}`}
               >
                 {h}
               </th>
@@ -88,18 +61,12 @@ export default function OfferDistributionPanel({ data }: Props) {
         </thead>
         <tbody>
           {data.conditions.map((c) => (
-            <tr key={c.condition} style={{ borderBottom: "1px solid #f3f4f6" }}>
-              <td style={{ padding: "5px 10px" }}>{c.condition}</td>
-              <td style={{ textAlign: "right", padding: "5px 10px" }}>{c.count}</td>
-              <td style={{ textAlign: "right", padding: "5px 10px" }}>
-                {c.min_price?.toFixed(2) ?? "—"}
-              </td>
-              <td style={{ textAlign: "right", padding: "5px 10px" }}>
-                {c.avg_price?.toFixed(2) ?? "—"}
-              </td>
-              <td style={{ textAlign: "right", padding: "5px 10px" }}>
-                {c.max_price?.toFixed(2) ?? "—"}
-              </td>
+            <tr key={c.condition} className="border-b border-gray-100">
+              <td className="px-2.5 py-1.5">{c.condition}</td>
+              <td className="px-2.5 py-1.5 text-right">{c.count}</td>
+              <td className="px-2.5 py-1.5 text-right">{c.min_price?.toFixed(2) ?? "—"}</td>
+              <td className="px-2.5 py-1.5 text-right">{c.avg_price?.toFixed(2) ?? "—"}</td>
+              <td className="px-2.5 py-1.5 text-right">{c.max_price?.toFixed(2) ?? "—"}</td>
             </tr>
           ))}
         </tbody>

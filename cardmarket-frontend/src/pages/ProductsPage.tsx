@@ -49,18 +49,10 @@ function SortableHeader({
   return (
     <th
       onClick={() => onSort(column)}
-      style={{
-        borderBottom: "2px solid #e5e7eb",
-        textAlign: align,
-        padding: "8px 10px",
-        cursor: "pointer",
-        userSelect: "none",
-        whiteSpace: "nowrap",
-        color: active ? "#1d4ed8" : undefined,
-      }}
+      className={`px-3 py-2 border-b-2 border-gray-200 text-xs font-semibold uppercase tracking-wide cursor-pointer select-none whitespace-nowrap ${align === "right" ? "text-right" : "text-left"} ${active ? "text-blue-700" : "text-gray-500"}`}
     >
       {label}
-      <span style={{ color: active ? "#1d4ed8" : "#9ca3af", fontSize: "0.75rem" }}>{indicator}</span>
+      <span className={`text-xs ${active ? "text-blue-700" : "text-gray-400"}`}>{indicator}</span>
     </th>
   );
 }
@@ -110,119 +102,122 @@ export default function ProductsPage() {
       .finally(() => setLoading(false));
   }, [limit, offset, search, minPrice, maxPrice, sortBy, sortOrder]);
 
+  const inputClass = "border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const btnClass = "px-3 py-1.5 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed";
+
   return (
-    <div style={{ padding: "1.5rem" }}>
-      <h1 style={{ marginBottom: "8px" }}>Produkte</h1>
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-3">Produkte</h1>
 
       {/* Filter bar */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap", alignItems: "center" }}>
+      <div className="flex flex-wrap gap-2 mb-3 items-center">
         <input
           type="text"
           placeholder="Suche nach Produkt…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-          style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "4px", minWidth: "220px" }}
+          className={`${inputClass} min-w-56`}
         />
         <input
           type="number"
           placeholder="Min €"
           value={minPrice}
           onChange={(e) => { setMinPrice(e.target.value); setOffset(0); }}
-          style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "4px", width: "90px" }}
+          className={`${inputClass} w-24`}
         />
         <input
           type="number"
           placeholder="Max €"
           value={maxPrice}
           onChange={(e) => { setMaxPrice(e.target.value); setOffset(0); }}
-          style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "4px", width: "90px" }}
+          className={`${inputClass} w-24`}
         />
-        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.875rem" }}>
+        <label className="flex items-center gap-1.5 text-sm text-gray-600">
           Einträge:
           <select
             value={limit}
             onChange={(e) => { setLimit(Number(e.target.value)); setOffset(0); }}
-            style={{ padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "4px" }}
+            className={inputClass}
           >
             {PAGE_SIZE_OPTIONS.map((size) => (
               <option key={size} value={size}>{size}</option>
             ))}
           </select>
         </label>
-        <span style={{ color: "#6b7280", fontSize: "0.875rem" }}>
+        <span className="text-sm text-gray-500">
           {offset + 1}–{Math.min(offset + limit, data?.total ?? 0)} von {data?.total ?? 0}
         </span>
       </div>
 
-      {error && <div style={{ color: "red", marginBottom: "1rem" }}>{error}</div>}
-      {loading && <div style={{ color: "#6b7280" }}>Lade Produkte…</div>}
+      {error && <div className="text-red-600 mb-4">{error}</div>}
+      {loading && <div className="text-gray-500">Lade Produkte…</div>}
 
       {!loading && data && data.items.length === 0 && (
-        <div style={{ color: "#6b7280" }}>Keine Produkte gefunden.</div>
+        <div className="text-gray-500">Keine Produkte gefunden.</div>
       )}
 
       {!loading && data && data.items.length > 0 && (
         <>
-          <p style={{ fontSize: "0.8rem", color: "#9ca3af", marginBottom: "6px" }}>
+          <p className="text-xs text-gray-400 mb-2">
             Zeile anklicken für Preishistorie, Angebots-Verteilung und Kaufsignal. Spaltenköpfe anklicken zum Sortieren.
           </p>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-            <thead>
-              <tr style={{ background: "#f9fafb" }}>
-                <SortableHeader label="Produkt" column="product_name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="left" />
-                <SortableHeader label="Ab €" column="from_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Realist. €" column="realistic_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Trend €" column="price_trend" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Ø 30d" column="avg_30d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Ø 7d" column="avg_7d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Ø 1d" column="avg_1d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Letzter Crawl" column="last_crawled_at" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Erscheinungsdatum" column="release_date" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Angebote</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((item: LatestPriceItem) => (
-                <tr
-                  key={item.product_id}
-                  onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
-                  style={{ borderBottom: "1px solid #f3f4f6", cursor: "pointer" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f9ff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-                >
-                  <td style={{ padding: "7px 10px" }}>{item.product_name}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right" }}>{formatPrice(item.from_price)}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right", fontWeight: 600 }}>{formatPrice(item.realistic_price)}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right" }}>{formatPrice(item.price_trend)}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right" }}>{formatPrice(item.avg_30d)}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right" }}>{formatPrice(item.avg_7d)}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right" }}>{formatPrice(item.avg_1d)}</td>
-                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#6b7280", fontSize: "0.8rem" }}>
-                    {formatDate(item.last_crawled_at)}
-                  </td>
-                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#6b7280", fontSize: "0.8rem" }}>
-                    {formatReleaseDate(item.release_date)}
-                  </td>
-                  <td style={{ padding: "7px 10px", textAlign: "right", color: "#6b7280" }}>
-                    {item.offers_used ?? "–"}
-                  </td>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <table className="w-full text-sm border-collapse">
+              <thead className="bg-gray-50">
+                <tr>
+                  <SortableHeader label="Produkt" column="product_name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="left" />
+                  <SortableHeader label="Ab €" column="from_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Realist. €" column="realistic_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Trend €" column="price_trend" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Ø 30d" column="avg_30d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Ø 7d" column="avg_7d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Ø 1d" column="avg_1d" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Letzter Crawl" column="last_crawled_at" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Erscheinungsdatum" column="release_date" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <th className="px-3 py-2 border-b-2 border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500 text-right">Angebote</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.items.map((item: LatestPriceItem) => (
+                  <tr
+                    key={item.product_id}
+                    onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
+                    className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer"
+                  >
+                    <td className="px-3 py-2">{item.product_name}</td>
+                    <td className="px-3 py-2 text-right">{formatPrice(item.from_price)}</td>
+                    <td className="px-3 py-2 text-right font-semibold">{formatPrice(item.realistic_price)}</td>
+                    <td className="px-3 py-2 text-right">{formatPrice(item.price_trend)}</td>
+                    <td className="px-3 py-2 text-right">{formatPrice(item.avg_30d)}</td>
+                    <td className="px-3 py-2 text-right">{formatPrice(item.avg_7d)}</td>
+                    <td className="px-3 py-2 text-right">{formatPrice(item.avg_1d)}</td>
+                    <td className="px-3 py-2 text-right text-gray-500 text-xs">
+                      {formatDate(item.last_crawled_at)}
+                    </td>
+                    <td className="px-3 py-2 text-right text-gray-500 text-xs">
+                      {formatReleaseDate(item.release_date)}
+                    </td>
+                    <td className="px-3 py-2 text-right text-gray-500">
+                      {item.offers_used ?? "–"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <div style={{ marginTop: "12px", display: "flex", gap: "8px", alignItems: "center" }}>
+          <div className="mt-3 flex gap-2 items-center">
             <button
               onClick={() => setOffset(Math.max(0, offset - limit))}
               disabled={offset === 0}
-              style={{ padding: "4px 12px", borderRadius: "4px", border: "1px solid #d1d5db", cursor: "pointer" }}
+              className={btnClass}
             >
               ← Zurück
             </button>
             <button
               onClick={() => setOffset(offset + limit)}
               disabled={!data || offset + limit >= data.total}
-              style={{ padding: "4px 12px", borderRadius: "4px", border: "1px solid #d1d5db", cursor: "pointer" }}
+              className={btnClass}
             >
               Weiter →
             </button>

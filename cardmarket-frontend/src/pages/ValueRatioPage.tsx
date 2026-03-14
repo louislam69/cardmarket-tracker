@@ -34,18 +34,10 @@ function SortableHeader({
   return (
     <th
       onClick={() => onSort(column)}
-      style={{
-        borderBottom: "2px solid #e5e7eb",
-        textAlign: align,
-        padding: "8px 10px",
-        cursor: "pointer",
-        userSelect: "none",
-        whiteSpace: "nowrap",
-        color: active ? "#1d4ed8" : undefined,
-      }}
+      className={`px-3 py-2 border-b-2 border-gray-200 text-xs font-semibold uppercase tracking-wide cursor-pointer select-none whitespace-nowrap ${align === "right" ? "text-right" : "text-left"} ${active ? "text-blue-700" : "text-gray-500"}`}
     >
       {label}
-      <span style={{ color: active ? "#1d4ed8" : "#9ca3af", fontSize: "0.75rem" }}>{indicator}</span>
+      <span className={`text-xs ${active ? "text-blue-700" : "text-gray-400"}`}>{indicator}</span>
     </th>
   );
 }
@@ -87,107 +79,92 @@ export default function ValueRatioPage() {
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
 
+  const inputClass = "border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const btnClass = "px-3 py-1.5 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed";
+
   return (
-    <div style={{ padding: "1.5rem" }}>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.25rem" }}>
-        Sealed vs. Singles
-      </h1>
-      <p style={{ color: "#6b7280", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Sealed vs. Singles</h1>
+      <p className="text-sm text-gray-500 mb-4">
         Value Ratio = Singles-Wert / Sealed-Preis. Ratio &gt; 1 bedeutet: Sealed kaufen lohnt sich.
         Nur Produkte mit verlinkten Komponenten und bekannten Preisen werden angezeigt.
       </p>
 
       {/* Filter bar */}
-      <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap" }}>
+      <div className="flex flex-wrap gap-2 mb-4 items-center">
         <input
           type="text"
           placeholder="Produktname suchen…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-          style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "4px", fontSize: "0.875rem", minWidth: "200px" }}
+          className={`${inputClass} min-w-52`}
         />
         <select
           value={limit}
           onChange={(e) => { setLimit(Number(e.target.value)); setOffset(0); }}
-          style={{ padding: "6px 8px", border: "1px solid #d1d5db", borderRadius: "4px", fontSize: "0.875rem" }}
+          className={inputClass}
         >
           {PAGE_SIZE_OPTIONS.map((s) => (
             <option key={s} value={s}>{s} pro Seite</option>
           ))}
         </select>
-        <span style={{ fontSize: "0.8rem", color: "#9ca3af" }}>
-          {total} Produkte
-        </span>
+        <span className="text-sm text-gray-400">{total} Produkte</span>
       </div>
 
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-      {loading && <p style={{ color: "#6b7280" }}>Lade…</p>}
+      {error && <p className="text-red-700 mb-3">{error}</p>}
+      {loading && <p className="text-gray-500">Lade…</p>}
 
       {!loading && items.length === 0 && !error && (
-        <p style={{ color: "#6b7280" }}>
+        <p className="text-gray-500">
           Keine Daten. Stelle sicher, dass sealed_contents mit linked_product_id befüllt ist und Preise für die verlinkten Produkte vorliegen.
         </p>
       )}
 
       {!loading && items.length > 0 && (
         <>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-            <thead>
-              <tr style={{ background: "#f9fafb" }}>
-                <SortableHeader label="Produkt" column="product_name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="left" />
-                <SortableHeader label="Sealed-Preis" column="sealed_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Singles-Wert" column="singles_sum" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <SortableHeader label="Ratio" column="value_ratio" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
-                <th style={{ borderBottom: "2px solid #e5e7eb", textAlign: "right", padding: "8px 10px" }}>Komp.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => {
-                const ratioGood = item.value_ratio >= 1;
-                return (
-                  <tr
-                    key={item.product_id}
-                    onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
-                    style={{ borderBottom: "1px solid #f3f4f6", cursor: "pointer" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f9ff")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-                  >
-                    <td style={{ padding: "7px 10px", fontWeight: 500 }}>{item.product_name}</td>
-                    <td style={{ padding: "7px 10px", textAlign: "right", color: "#374151" }}>
-                      {fmt(item.sealed_price)}
-                    </td>
-                    <td style={{ padding: "7px 10px", textAlign: "right", color: "#374151" }}>
-                      {fmt(item.singles_sum)}
-                    </td>
-                    <td style={{ padding: "7px 10px", textAlign: "right", fontWeight: 700, color: ratioGood ? "#15803d" : "#b91c1c" }}>
-                      {fmtRatio(item.value_ratio)}
-                    </td>
-                    <td style={{ padding: "7px 10px", textAlign: "right", color: "#6b7280", fontSize: "0.8rem" }}>
-                      {item.priced_components}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <table className="w-full text-sm border-collapse">
+              <thead className="bg-gray-50">
+                <tr>
+                  <SortableHeader label="Produkt" column="product_name" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="left" />
+                  <SortableHeader label="Sealed-Preis" column="sealed_price" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Singles-Wert" column="singles_sum" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <SortableHeader label="Ratio" column="value_ratio" sortBy={sortBy} sortOrder={sortOrder} onSort={handleSort} align="right" />
+                  <th className="px-3 py-2 border-b-2 border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500 text-right">Komp.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => {
+                  const ratioGood = item.value_ratio >= 1;
+                  return (
+                    <tr
+                      key={item.product_id}
+                      onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
+                      className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer"
+                    >
+                      <td className="px-3 py-2 font-medium">{item.product_name}</td>
+                      <td className="px-3 py-2 text-right">{fmt(item.sealed_price)}</td>
+                      <td className="px-3 py-2 text-right">{fmt(item.singles_sum)}</td>
+                      <td className={`px-3 py-2 text-right font-bold ${ratioGood ? "text-green-700" : "text-red-700"}`}>
+                        {fmtRatio(item.value_ratio)}
+                      </td>
+                      <td className="px-3 py-2 text-right text-gray-500 text-xs">{item.priced_components}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
           {/* Pagination */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "1rem" }}>
-            <button
-              onClick={() => setOffset(Math.max(0, offset - limit))}
-              disabled={offset === 0}
-              style={{ padding: "5px 12px", borderRadius: "4px", border: "1px solid #d1d5db", cursor: offset === 0 ? "not-allowed" : "pointer", opacity: offset === 0 ? 0.5 : 1 }}
-            >
+          <div className="flex gap-2 items-center mt-4">
+            <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0} className={btnClass}>
               Zurück
             </button>
-            <span style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+            <span className="text-sm text-gray-500">
               Seite {currentPage} / {totalPages || 1}
             </span>
-            <button
-              onClick={() => setOffset(offset + limit)}
-              disabled={offset + limit >= total}
-              style={{ padding: "5px 12px", borderRadius: "4px", border: "1px solid #d1d5db", cursor: offset + limit >= total ? "not-allowed" : "pointer", opacity: offset + limit >= total ? 0.5 : 1 }}
-            >
+            <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total} className={btnClass}>
               Weiter
             </button>
           </div>

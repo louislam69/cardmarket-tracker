@@ -2,27 +2,13 @@ import { useEffect, useState } from "react";
 import { fetchVolatility, type VolatilityItem } from "../api/insights";
 
 function CvBadge({ cv }: { cv: number }) {
-  let label: string;
-  let color: string;
-  let bg: string;
   if (cv >= 20) {
-    label = "Hoch volatil";
-    color = "#b91c1c";
-    bg = "#fee2e2";
+    return <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs font-semibold">Hoch volatil</span>;
   } else if (cv >= 10) {
-    label = "Mittel";
-    color = "#92400e";
-    bg = "#fef3c7";
+    return <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-semibold">Mittel</span>;
   } else {
-    label = "Stabil";
-    color = "#15803d";
-    bg = "#dcfce7";
+    return <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold">Stabil</span>;
   }
-  return (
-    <span style={{ backgroundColor: bg, color, padding: "2px 8px", borderRadius: "10px", fontWeight: 600, fontSize: "0.78rem" }}>
-      {label}
-    </span>
-  );
 }
 
 export default function VolatilityPage() {
@@ -44,83 +30,80 @@ export default function VolatilityPage() {
       .finally(() => setLoading(false));
   }, [limit, offset, search]);
 
+  const inputClass = "border border-gray-300 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const btnClass = "px-3 py-1.5 rounded border border-gray-300 text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed";
+
   return (
-    <div style={{ padding: "1.5rem" }}>
-      <h1 style={{ marginBottom: "4px" }}>Volatilität</h1>
-      <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "16px" }}>
+    <div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Volatilität</h1>
+      <p className="text-sm text-gray-500 mb-4">
         Produkte mit den größten Preisschwankungen – sortiert nach Variationskoeffizient (CV).
         Nur Produkte mit ≥ 3 Crawls. Hohe CV = potenzielle Handelschance.
       </p>
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap", alignItems: "center" }}>
+      <div className="flex flex-wrap gap-2 mb-4 items-center">
         <input
           type="text"
           placeholder="Suche nach Produkt…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setOffset(0); }}
-          style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "4px", minWidth: "220px" }}
+          className={`${inputClass} min-w-56`}
         />
         <select
           value={limit}
           onChange={(e) => { setLimit(Number(e.target.value)); setOffset(0); }}
-          style={{ padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "4px" }}
+          className={inputClass}
         >
           {[25, 50, 100].map((n) => (
             <option key={n} value={n}>{n} pro Seite</option>
           ))}
         </select>
-        <span style={{ color: "#6b7280", fontSize: "0.875rem" }}>{total} Produkte</span>
+        <span className="text-sm text-gray-500">{total} Produkte</span>
       </div>
 
       {loading ? (
-        <div style={{ color: "#6b7280" }}>Lade…</div>
+        <div className="text-gray-500">Lade…</div>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem" }}>
-          <thead>
-            <tr style={{ background: "#f9fafb" }}>
-              {["Produkt", "Ø Preis €", "StdAbw €", "CV %", "Min €", "Max €", "Spanne €", "Crawls", "Einschätzung"].map((h) => (
-                <th key={h} style={{ textAlign: h === "Produkt" ? "left" : "right", padding: "8px 12px", borderBottom: "2px solid #e5e7eb" }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.product_id} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                <td style={{ padding: "7px 12px" }}>{item.product_name}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px" }}>{item.avg_realistic_price.toFixed(2)}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px" }}>{item.stddev_price.toFixed(2)}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px", fontWeight: 700 }}>{item.cv.toFixed(1)}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px" }}>{item.min_price.toFixed(2)}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px" }}>{item.max_price.toFixed(2)}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px" }}>{item.price_range.toFixed(2)}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px", color: "#6b7280" }}>{item.crawl_count}</td>
-                <td style={{ textAlign: "right", padding: "7px 12px" }}>
-                  <CvBadge cv={item.cv} />
-                </td>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+          <table className="w-full text-sm border-collapse">
+            <thead className="bg-gray-50">
+              <tr>
+                {["Produkt", "Ø Preis €", "StdAbw €", "CV %", "Min €", "Max €", "Spanne €", "Crawls", "Einschätzung"].map((h) => (
+                  <th key={h} className={`px-3 py-2 border-b-2 border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500 ${h === "Produkt" ? "text-left" : "text-right"}`}>
+                    {h}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.product_id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="px-3 py-2">{item.product_name}</td>
+                  <td className="px-3 py-2 text-right">{item.avg_realistic_price.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-right">{item.stddev_price.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-right font-bold">{item.cv.toFixed(1)}</td>
+                  <td className="px-3 py-2 text-right">{item.min_price.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-right">{item.max_price.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-right">{item.price_range.toFixed(2)}</td>
+                  <td className="px-3 py-2 text-right text-gray-500">{item.crawl_count}</td>
+                  <td className="px-3 py-2 text-right">
+                    <CvBadge cv={item.cv} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <div style={{ display: "flex", gap: "8px", marginTop: "12px", alignItems: "center" }}>
-        <button
-          onClick={() => setOffset(Math.max(0, offset - limit))}
-          disabled={offset === 0}
-          style={{ padding: "4px 12px", borderRadius: "4px", border: "1px solid #d1d5db", cursor: "pointer" }}
-        >
+      <div className="flex gap-2 mt-3 items-center">
+        <button onClick={() => setOffset(Math.max(0, offset - limit))} disabled={offset === 0} className={btnClass}>
           ← Zurück
         </button>
-        <span style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+        <span className="text-sm text-gray-500">
           {offset + 1}–{Math.min(offset + limit, total)} von {total}
         </span>
-        <button
-          onClick={() => setOffset(offset + limit)}
-          disabled={offset + limit >= total}
-          style={{ padding: "4px 12px", borderRadius: "4px", border: "1px solid #d1d5db", cursor: "pointer" }}
-        >
+        <button onClick={() => setOffset(offset + limit)} disabled={offset + limit >= total} className={btnClass}>
           Weiter →
         </button>
       </div>
