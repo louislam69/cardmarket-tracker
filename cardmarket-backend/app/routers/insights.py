@@ -801,7 +801,7 @@ def get_value_ratios(
         WHERE ps.realistic_price IS NOT NULL
     ),
     lp AS (
-        SELECT product_id, realistic_price FROM latest_prices WHERE rn = 1
+        SELECT product_id, realistic_price FROM latest_prices WHERE rn = 1 AND realistic_price > 0
     ),
     component_sums AS (
         SELECT
