@@ -23,8 +23,12 @@ alembic upgrade head                  # Apply schema migrations (runs automatica
 uvicorn app.main:app --reload --port 8000
 
 # Data pipeline (run from cardmarket-backend/ using .venv/Scripts/python)
-python import_csv_runs.py   # Import CSVs from data/new/ into DB + compute realistic_price
-python repair_prices.py     # One-time: re-parse raw_cells and recompute realistic_price for all crawls
+python import_csv_runs.py        # Import CSVs from data/new/ into DB + compute realistic_price
+python repair_prices.py          # Re-parse raw_cells + recompute realistic_price (langsam, alle offers)
+python recompute_prices_only.py  # Nur realistic_price neu berechnen ohne Raw-Cells-Parsing (schnell)
+
+# Gegen Railway-PostgreSQL ausführen (z.B. nach Änderungen an Blacklist/Logik):
+DATABASE_URL=postgresql://... python recompute_prices_only.py
 
 # One-time SQLite → PostgreSQL data migration
 SQLITE_PATH=./app.db DATABASE_URL=postgresql://... python migrate_sqlite_to_postgres.py
@@ -91,3 +95,13 @@ No test suite exists in any component.
 Single-file scraper (`scrape_cardmarket.py`). Uses a visible Chromium browser with session cookies (`storage_state.json`) to handle Cloudflare and manual captcha solving. Random 8–14s delays between URLs; up to 3 retry attempts per URL.
 
 **Known bug fixed:** `EURO_RE` was `r"(\d+[.,]\d+)\s*€"` — could not capture German prices ≥ 1,000 € (e.g. `1.800,00 €` was parsed as `800.0`). Fixed to `r"(\d+(?:[.,]\d+)*)\s*€"`. Run `repair_prices.py` to correct existing DB data.
+
+### realistic_price Berechnung
+`realistic_price` wird in `import_csv_runs.py` → `compute_realistic_prices_for_crawl()` berechnet:
+1. **Keyword-Filter:** Angebote mit beschädigten/inhaltslosen Kommentaren werden entfernt (`KEYWORD_BLACKLIST`: "damage", "hole", "damaged", "fake", "proxy", "empty", "leer", u.v.m.)
+2. **5 günstigste:** Von den verbleibenden Angeboten werden die 5 günstigsten nach `item_price` (ohne Versand) genommen
+3. **Median:** Der Median dieser 5 Preise ergibt den `realistic_price`
+
+**Wichtig:** `item_price` wird verwendet (nicht `total_price`) — Versandkosten variieren je nach Käuferstandort und werden bewusst ausgeschlossen.
+
+Nach Änderungen an `KEYWORD_BLACKLIST` oder der Berechnungslogik: `recompute_prices_only.py` lokal und gegen Railway-DB laufen lassen.

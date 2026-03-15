@@ -14,7 +14,7 @@ import re
 import sqlite3
 from typing import Optional, Dict
 
-from import_csv_runs import get_connection, compute_realistic_prices_for_crawl
+from import_csv_runs import get_connection, compute_realistic_prices_for_crawl, _sql
 
 # ── Fixed regex: (?:[.,]\d+)* allows repeated thousands/decimal groups ──────
 EURO_RE = re.compile(r"(\d+(?:[.,]\d+)*)\s*€")
@@ -90,7 +90,7 @@ def parse_offer_raw_cells(raw_cells: str, seller: str = "") -> Dict:
 def repair(conn: sqlite3.Connection):
     cur = conn.cursor()
     cur.execute(
-        "SELECT id, crawl_id, seller, raw_cells FROM offers WHERE raw_cells IS NOT NULL"
+        _sql("SELECT id, crawl_id, seller, raw_cells FROM offers WHERE raw_cells IS NOT NULL")
     )
     rows = cur.fetchall()
     print(f"Re-parsing {len(rows)} offers with raw_cells …")
@@ -109,7 +109,7 @@ def repair(conn: sqlite3.Connection):
         affected_crawls.add(crawl_id)
 
     cur.executemany(
-        "UPDATE offers SET item_price=?, shipping_price=?, total_price=? WHERE id=?",
+        _sql("UPDATE offers SET item_price=?, shipping_price=?, total_price=? WHERE id=?"),
         updates,
     )
     conn.commit()
