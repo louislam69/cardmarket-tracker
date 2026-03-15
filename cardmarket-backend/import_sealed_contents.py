@@ -1,8 +1,8 @@
 """
 import_sealed_contents.py
 -------------------------
-1. Erstellt die `sealed_contents`-Tabelle, falls sie noch nicht existiert.
-2. Liest data/sealed_contents.json und schreibt die Inhalte in die DB.
+Liest data/sealed_contents.json und schreibt die Inhalte in die DB.
+Unterstützt SQLite (lokal) und PostgreSQL (Railway) via DATABASE_URL.
 
 Format der JSON-Datei:
   {
@@ -14,14 +14,16 @@ Format der JSON-Datei:
   }
 
 Ausführen aus cardmarket-backend/:
-    python import_sealed_contents.py
+    python import_sealed_contents.py                          # SQLite lokal
+    DATABASE_URL=postgresql://... python import_sealed_contents.py  # Railway PostgreSQL
 """
 
 import json
-import sqlite3
+import os
 from pathlib import Path
+from sqlalchemy import create_engine, text
 
-DB_PATH = Path(__file__).parent / "app.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 JSON_PATH = Path(__file__).parent / "data" / "sealed_contents.json"
 
 ALLOWED_TYPES = {
@@ -45,99 +47,88 @@ ALLOWED_TYPES = {
 }
 
 
-def create_table(conn: sqlite3.Connection) -> None:
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS sealed_contents (
-            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id          INTEGER NOT NULL REFERENCES products(id),
-            component_type      TEXT    NOT NULL,
-            qty                 INTEGER NOT NULL,
-            linked_product_id   INTEGER REFERENCES products(id),
-            UNIQUE(product_id, component_type)
-        )
-        """
-    )
-    conn.commit()
-    print("Table 'sealed_contents' ready.")
-
-
-def import_contents(conn: sqlite3.Connection, data: dict) -> None:
+def import_contents(data: dict) -> None:
+    engine = create_engine(DATABASE_URL)
     inserted = skipped = 0
 
-    for id_str, components in data.items():
-        if id_str.startswith("_"):
-            continue
+    with engine.begin() as conn:
+        for id_str, components in data.items():
+            if id_str.startswith("_"):
+                continue
 
-        product_id = int(id_str)
+            product_id = int(id_str)
 
-        # Produkt muss in DB existieren
-        if not conn.execute("SELECT 1 FROM products WHERE id = ?", (product_id,)).fetchone():
-            print(f"  WARNING: product_id={product_id} nicht in DB — übersprungen.")
-            skipped += len(components) if isinstance(components, list) else 1
-            continue
+            if not conn.execute(text("SELECT 1 FROM products WHERE id = :id"), {"id": product_id}).fetchone():
+                print(f"  WARNING: product_id={product_id} nicht in DB — übersprungen.")
+                skipped += len(components) if isinstance(components, list) else 1
+                continue
 
-        if not isinstance(components, list):
-            print(f"  WARNING: product_id={product_id} — Wert ist keine Liste — übersprungen.")
-            skipped += 1
-            continue
-
-        for comp in components:
-            component_type = comp.get("component_type")
-            qty = comp.get("qty")
-            linked_product_id = comp.get("linked_product_id")
-
-            if component_type not in ALLOWED_TYPES:
-                print(
-                    f"  WARNING: product_id={product_id} — ungültiger component_type '{component_type}' — übersprungen."
-                )
+            if not isinstance(components, list):
+                print(f"  WARNING: product_id={product_id} — Wert ist keine Liste — übersprungen.")
                 skipped += 1
                 continue
 
-            if not isinstance(qty, int) or qty <= 0:
-                print(
-                    f"  WARNING: product_id={product_id}, type={component_type} — ungültige qty={qty!r} — übersprungen."
-                )
-                skipped += 1
-                continue
+            for comp in components:
+                component_type = comp.get("component_type")
+                qty = comp.get("qty")
+                linked_product_id = comp.get("linked_product_id")
 
-            if linked_product_id is not None:
-                if not conn.execute(
-                    "SELECT 1 FROM products WHERE id = ?", (linked_product_id,)
-                ).fetchone():
+                if component_type not in ALLOWED_TYPES:
                     print(
-                        f"  WARNING: linked_product_id={linked_product_id} nicht in DB — wird als NULL gespeichert."
+                        f"  WARNING: product_id={product_id} — ungültiger component_type '{component_type}' — übersprungen."
                     )
-                    linked_product_id = None
+                    skipped += 1
+                    continue
 
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO sealed_contents (product_id, component_type, qty, linked_product_id)
-                VALUES (?, ?, ?, ?)
-                """,
-                (product_id, component_type, qty, linked_product_id),
-            )
-            inserted += 1
+                if not isinstance(qty, int) or qty <= 0:
+                    print(
+                        f"  WARNING: product_id={product_id}, type={component_type} — ungültige qty={qty!r} — übersprungen."
+                    )
+                    skipped += 1
+                    continue
 
-    conn.commit()
+                if linked_product_id is not None:
+                    if not conn.execute(
+                        text("SELECT 1 FROM products WHERE id = :id"), {"id": linked_product_id}
+                    ).fetchone():
+                        print(
+                            f"  WARNING: linked_product_id={linked_product_id} nicht in DB — wird als NULL gespeichert."
+                        )
+                        linked_product_id = None
+
+                conn.execute(
+                    text("""
+                        INSERT INTO sealed_contents (product_id, component_type, qty, linked_product_id)
+                        VALUES (:product_id, :component_type, :qty, :linked_product_id)
+                        ON CONFLICT (product_id, component_type) DO UPDATE SET
+                            qty = EXCLUDED.qty,
+                            linked_product_id = EXCLUDED.linked_product_id
+                    """),
+                    {
+                        "product_id": product_id,
+                        "component_type": component_type,
+                        "qty": qty,
+                        "linked_product_id": linked_product_id,
+                    },
+                )
+                inserted += 1
+
     print(f"Done: {inserted} Zeilen eingefügt/ersetzt, {skipped} übersprungen.")
 
 
 def main() -> None:
-    if not DB_PATH.exists():
-        raise FileNotFoundError(f"Datenbank nicht gefunden: {DB_PATH}")
     if not JSON_PATH.exists():
         raise FileNotFoundError(f"JSON-Datei nicht gefunden: {JSON_PATH}")
 
     with open(JSON_PATH, encoding="utf-8") as f:
         data = json.load(f)
 
-    conn = sqlite3.connect(DB_PATH)
-    try:
-        create_table(conn)
-        import_contents(conn, data)
-    finally:
-        conn.close()
+    if "postgresql" in DATABASE_URL:
+        print("Verbinde mit PostgreSQL...")
+    else:
+        print("Verbinde mit SQLite (app.db)...")
+
+    import_contents(data)
 
 
 if __name__ == "__main__":
