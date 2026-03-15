@@ -15,8 +15,15 @@ import pandas as pd
 RUN_RE = re.compile(r"^(products|offers)_(\d{4}-\d{2}-\d{2})_(\d{6})\.csv$")
 
 KEYWORD_BLACKLIST = [
-    "empty", "leer", "display only", "box only",
-    "ohne inhalt", "keine karten", "damaged", "opened", "resealed",
+    # Leere / inhaltlose Artikel
+    "empty", "leer", "display only", "box only", "ohne inhalt", "keine karten",
+    "no cards", "not included", "without cards", "foil only", "wrapper",
+    "hülle", "sleeve only", "code only", "code card", "insert only",
+    # Beschädigt / manipuliert
+    "damaged", "heavily damaged", "water damage", "bent", "creased",
+    "altered", "fake", "proxy", "resealed", "opened", "repack",
+    # Unvollständig / Sonstiges
+    "sample", "misprint", "token only", "not mint",
 ]
 
 # Dialect detection — set once at module load
@@ -387,7 +394,7 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
     for product_id, total_price, comment in cur.fetchall():
         by_product.setdefault(product_id, []).append((total_price, comment))
 
-    n_keyword = n_outlier = n_adjusted = 0
+    n_keyword = n_adjusted = 0
     updates = []
 
     for product_id, offers in by_product.items():
@@ -403,20 +410,9 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
             updates.append((None, 0, crawl_id, product_id))
             continue
 
-        # 2) Outlier filter: exclude prices below 50% of median
-        sorted_clean = sorted(clean)
-        med = _median(sorted_clean)
-        threshold = med * 0.5
-        before = len(clean)
-        clean = [p for p in sorted_clean if p >= threshold]
-        n_outlier += before - len(clean)
-
-        if not clean:
-            updates.append((None, 0, crawl_id, product_id))
-            continue
-
-        # 3) Skip 2 cheapest, take up to 5 (extends naturally beyond rank 7 if needed).
+        # 2) Skip 2 cheapest, take up to 5.
         #    If too few clean offers, reduce skip to always keep at least 3 in window.
+        clean = sorted(clean)
         skip = min(2, max(0, len(clean) - 3))
         if skip < 2:
             n_adjusted += 1
@@ -431,7 +427,7 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
     """), updates)
     conn.commit()
 
-    print(f"[FILTER] keyword={n_keyword}, outlier={n_outlier}, adjusted_skip={n_adjusted}")
+    print(f"[FILTER] keyword={n_keyword}, adjusted_skip={n_adjusted}")
 
 
 def import_one_run(products_csv: Path, offers_csv: Path):
