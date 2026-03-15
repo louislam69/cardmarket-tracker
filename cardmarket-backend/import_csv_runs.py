@@ -20,8 +20,9 @@ KEYWORD_BLACKLIST = [
     "no cards", "not included", "without cards", "foil only", "wrapper",
     "hülle", "sleeve only", "code only", "code card", "insert only",
     # Beschädigt / manipuliert
-    "damaged", "heavily damaged", "water damage", "bent", "creased",
+    "damage", "damaged", "heavily damaged", "water damage", "bent", "creased",
     "altered", "fake", "proxy", "resealed", "opened", "repack",
+    "hole", "worn", "wear", "scratch", "tear", "stain", "dent",
     # Unvollständig / Sonstiges
     "sample", "misprint", "token only", "not mint",
 ]
