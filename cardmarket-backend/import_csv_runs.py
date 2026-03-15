@@ -394,7 +394,7 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
     for product_id, total_price, comment in cur.fetchall():
         by_product.setdefault(product_id, []).append((total_price, comment))
 
-    n_keyword = n_adjusted = 0
+    n_keyword = 0
     updates = []
 
     for product_id, offers in by_product.items():
@@ -410,13 +410,9 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
             updates.append((None, 0, crawl_id, product_id))
             continue
 
-        # 2) Skip 2 cheapest, take up to 5.
-        #    If too few clean offers, reduce skip to always keep at least 3 in window.
+        # 2) Take the 5 cheapest offers, compute their median.
         clean = sorted(clean)
-        skip = min(2, max(0, len(clean) - 3))
-        if skip < 2:
-            n_adjusted += 1
-        window = clean[skip:skip + 5]
+        window = clean[:5]
         realistic_price = _median(window)
         updates.append((realistic_price, len(window), crawl_id, product_id))
 
@@ -427,7 +423,7 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
     """), updates)
     conn.commit()
 
-    print(f"[FILTER] keyword={n_keyword}, adjusted_skip={n_adjusted}")
+    print(f"[FILTER] keyword={n_keyword}")
 
 
 def import_one_run(products_csv: Path, offers_csv: Path):
