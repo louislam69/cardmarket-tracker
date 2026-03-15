@@ -219,11 +219,13 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
       </Modal>
 
       {/* Verschachteltes Modal für verlinkte Produkte */}
-      <ProductDetailModal
-        productId={nestedProduct?.id ?? null}
-        productName={nestedProduct?.name ?? ""}
-        onClose={() => setNestedProduct(null)}
-      />
+      {nestedProduct && (
+        <ProductDetailModal
+          productId={nestedProduct.id}
+          productName={nestedProduct.name}
+          onClose={() => setNestedProduct(null)}
+        />
+      )}
     </>
   );
 }
