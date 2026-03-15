@@ -52,6 +52,10 @@ python scrape_cardmarket.py --urls urls_test.txt --limit 4  # Test run
 
 No test suite exists in any component.
 
+## Arbeitsweise
+
+**Nach jeder Änderung immer sofort committen und pushen** — auch bei Auto-Accept / automatisch angewendeten Edits. Railway deployed nur wenn Code auf GitHub (origin/main) landet. Nie Änderungen lokal lassen ohne Commit + Push.
+
 ## Architecture
 
 ### Data Flow
