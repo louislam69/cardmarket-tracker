@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   fetchLatestPrices,
   type LatestPricesResponse,
@@ -49,13 +50,14 @@ function SortableHeader({
 }
 
 export default function ProductsPage() {
+  const [searchParams] = useSearchParams();
   const [data, setData] = useState<LatestPricesResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [limit, setLimit] = useState(25);
   const [offset, setOffset] = useState(0);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("product_name");

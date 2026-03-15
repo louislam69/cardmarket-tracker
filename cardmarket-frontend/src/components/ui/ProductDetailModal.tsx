@@ -39,6 +39,36 @@ function formatReleaseDate(iso: string): string {
   return `${d}.${m}.${y}`;
 }
 
+function MiniStat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+  return (
+    <div className="text-center">
+      <div className="text-xs text-gray-500 mb-0.5">{label}</div>
+      <div className={`font-bold ${highlight ? "text-xl text-blue-700" : "text-base text-gray-800"}`}>
+        {value.toFixed(2)} €
+      </div>
+    </div>
+  );
+}
+
+function PercentileGauge({ value }: { value: number }) {
+  const color = value <= 25 ? "bg-green-500" : value <= 60 ? "bg-yellow-400" : "bg-red-500";
+  return (
+    <div className="mb-4">
+      <div className="flex justify-between text-xs text-gray-500 mb-1">
+        <span>Günstigstes Niveau</span>
+        <span className="font-medium">Historisches Perzentil: {value.toFixed(0)} %</span>
+        <span>Teuerstes Niveau</span>
+      </div>
+      <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${color}`}
+          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   productId: number | null;
   productName: string;
@@ -53,6 +83,7 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
   const [cardmarketUrl, setCardmarketUrl] = useState<string | null>(null);
   const [sealedContents, setSealedContents] = useState<SealedContentsResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [nestedProduct, setNestedProduct] = useState<{ id: number; name: string } | null>(null);
 
   useEffect(() => {
     if (productId === null) return;
@@ -63,6 +94,7 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
     setReleaseDate(null);
     setCardmarketUrl(null);
     setSealedContents(null);
+    setNestedProduct(null);
 
     Promise.allSettled([
       fetchPriceHistory(productId),
@@ -105,68 +137,93 @@ export default function ProductDetailModal({ productId, productName, onClose }: 
   );
 
   return (
-    <Modal open={productId !== null} onClose={onClose} title={titleNode}>
-      {loading && <div className="text-gray-500 py-6">Lade Daten…</div>}
+    <>
+      <Modal open={productId !== null} onClose={onClose} title={titleNode}>
+        {loading && <div className="text-gray-500 py-6">Lade Daten…</div>}
 
-      {!loading && (
-        <>
-          {percentile && (
-            <div className="flex items-center gap-3 mb-5 px-3.5 py-2.5 bg-gray-50 rounded-lg flex-wrap">
-              <BuySignalBadge percentile={percentile.percentile_position} />
-              <span className="text-sm text-gray-700">
-                Aktuell: <strong>{percentile.current_price.toFixed(2)} €</strong>
-              </span>
-              <span className="text-sm text-gray-500">
-                Historisch: {percentile.historical_min.toFixed(2)} – {percentile.historical_max.toFixed(2)} €
-                &nbsp;|&nbsp;Ø {percentile.historical_avg.toFixed(2)} €
-                &nbsp;|&nbsp;{percentile.crawl_count} Crawls
-              </span>
-            </div>
-          )}
+        {!loading && (
+          <>
+            {/* Preis-Zusammenfassungs-Card */}
+            {percentile && (
+              <>
+                <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <BuySignalBadge percentile={percentile.percentile_position} />
+                    <span className="text-xs text-gray-400">
+                      {percentile.crawl_count} Crawls
+                      {releaseDate && ` · ${formatReleaseDate(releaseDate)}`}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <MiniStat label="Aktuell" value={percentile.current_price} highlight />
+                    <MiniStat label="Min (hist.)" value={percentile.historical_min} />
+                    <MiniStat label="Ø (hist.)" value={percentile.historical_avg} />
+                    <MiniStat label="Max (hist.)" value={percentile.historical_max} />
+                  </div>
+                </div>
+                <PercentileGauge value={percentile.percentile_position} />
+              </>
+            )}
 
-          {releaseDate && (
-            <div className="text-sm text-gray-500 mb-4">
-              Erscheinungsdatum: <strong className="text-gray-700">{formatReleaseDate(releaseDate)}</strong>
-            </div>
-          )}
+            {/* Sealed Contents */}
+            {sealedContents && sealedContents.items.length > 0 && (
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Inhalt</h4>
+                <table className="w-full text-xs border-collapse">
+                  <tbody>
+                    {sealedContents.items.map((item) => (
+                      <tr key={item.component_type} className="border-b border-gray-100 last:border-0">
+                        <td className="px-2 py-1.5 text-gray-500">
+                          {COMPONENT_LABELS[item.component_type] ?? item.component_type}
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-semibold w-8">{item.qty}×</td>
+                        <td className="px-2 py-1.5">
+                          {item.linked_product_id && item.linked_product_name ? (
+                            <button
+                              onClick={() => setNestedProduct({ id: item.linked_product_id!, name: item.linked_product_name! })}
+                              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                            >
+                              {item.linked_product_name}
+                            </button>
+                          ) : (
+                            <span className="text-gray-500">{item.linked_product_name ?? ""}</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-          {sealedContents && sealedContents.items.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">Inhalt</h4>
-              <table className="w-full text-xs border-collapse">
-                <tbody>
-                  {sealedContents.items.map((item) => (
-                    <tr key={item.component_type} className="border-b border-gray-100">
-                      <td className="px-2 py-1 text-gray-500">
-                        {COMPONENT_LABELS[item.component_type] ?? item.component_type}
-                      </td>
-                      <td className="px-2 py-1 text-right font-semibold">{item.qty}×</td>
-                      <td className="px-2 py-1 text-gray-500">{item.linked_product_name ?? ""}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            {/* Preisverlauf */}
+            {history && history.length > 0 && (
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Preisverlauf</h4>
+                <PriceHistoryChart data={history} />
+              </div>
+            )}
 
-          {history && history.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">Preisverlauf</h4>
-              <PriceHistoryChart data={history} />
-            </div>
-          )}
+            {/* Preisverteilung */}
+            {distribution && (
+              <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-4">
+                <OfferDistributionPanel data={distribution} />
+              </div>
+            )}
 
-          {distribution && (
-            <div className="border-t border-gray-200 pt-4">
-              <OfferDistributionPanel data={distribution} />
-            </div>
-          )}
+            {!history && !distribution && !percentile && (
+              <div className="text-gray-500">Keine Daten verfügbar.</div>
+            )}
+          </>
+        )}
+      </Modal>
 
-          {!history && !distribution && !percentile && (
-            <div className="text-gray-500">Keine Daten verfügbar.</div>
-          )}
-        </>
-      )}
-    </Modal>
+      {/* Verschachteltes Modal für verlinkte Produkte */}
+      <ProductDetailModal
+        productId={nestedProduct?.id ?? null}
+        productName={nestedProduct?.name ?? ""}
+        onClose={() => setNestedProduct(null)}
+      />
+    </>
   );
 }

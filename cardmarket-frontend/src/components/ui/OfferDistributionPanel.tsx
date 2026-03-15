@@ -1,8 +1,13 @@
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer,
+} from "recharts";
 import type { OfferDistribution } from "../../api/insights";
 
 interface Props {
   data: OfferDistribution;
 }
+
+const BAR_COLORS = ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#1d4ed8", "#7c3aed"];
 
 export default function OfferDistributionPanel({ data }: Props) {
   const range = data.max_price - data.min_price;
@@ -17,9 +22,8 @@ export default function OfferDistributionPanel({ data }: Props) {
         </span>
       </h4>
 
-      {/* Price range bar */}
+      {/* IQR-Bar */}
       <div className="relative h-6 bg-gray-200 rounded mt-3 mb-1">
-        {/* IQR box */}
         <div
           className="absolute h-full bg-blue-200 rounded-sm"
           style={{
@@ -27,7 +31,6 @@ export default function OfferDistributionPanel({ data }: Props) {
             width: `${Math.max(pct(data.p75_price) - pct(data.p25_price), 2)}%`,
           }}
         />
-        {/* Median marker */}
         <div
           className="absolute w-0.5 h-full bg-blue-600"
           style={{
@@ -44,10 +47,36 @@ export default function OfferDistributionPanel({ data }: Props) {
         <span>Max: {data.max_price.toFixed(2)} €</span>
       </div>
 
-      {/* Condition breakdown */}
+      {/* Condition BarChart */}
+      {data.conditions.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Angebote nach Zustand</h4>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={data.conditions} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+              <XAxis dataKey="condition" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip
+                formatter={(value, name) => [
+                  name === "count"
+                    ? `${value} Angebote`
+                    : `${Number(value).toFixed(2)} €`,
+                  name === "count" ? "Anzahl" : "Ø Preis",
+                ]}
+              />
+              <Bar dataKey="count" name="count" radius={[4, 4, 0, 0]}>
+                {data.conditions.map((_, i) => (
+                  <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Condition table */}
       <h4 className="text-sm font-semibold text-gray-700 mb-2">Zustand-Aufschlüsselung</h4>
       <table className="w-full text-sm border-collapse">
-        <thead className="bg-gray-50">
+        <thead className="bg-white">
           <tr>
             {["Zustand", "Anzahl", "Min €", "Ø €", "Max €"].map((h) => (
               <th
