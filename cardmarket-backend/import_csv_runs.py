@@ -384,15 +384,15 @@ def compute_realistic_prices_for_crawl(conn, crawl_id: int):
     cur = conn.cursor()
 
     cur.execute(_sql("""
-        SELECT product_id, total_price, comment
+        SELECT product_id, item_price, comment
         FROM offers
-        WHERE crawl_id = ? AND total_price IS NOT NULL
-        ORDER BY product_id, total_price ASC
+        WHERE crawl_id = ? AND item_price IS NOT NULL
+        ORDER BY product_id, item_price ASC
     """), (crawl_id,))
 
     by_product: Dict[int, List[tuple]] = {}
-    for product_id, total_price, comment in cur.fetchall():
-        by_product.setdefault(product_id, []).append((total_price, comment))
+    for product_id, item_price, comment in cur.fetchall():
+        by_product.setdefault(product_id, []).append((item_price, comment))
 
     n_keyword = 0
     updates = []
