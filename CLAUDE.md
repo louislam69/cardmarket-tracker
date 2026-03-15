@@ -27,6 +27,10 @@ python import_csv_runs.py        # Import CSVs from data/new/ into DB + compute 
 python repair_prices.py          # Re-parse raw_cells + recompute realistic_price (langsam, alle offers)
 python recompute_prices_only.py  # Nur realistic_price neu berechnen ohne Raw-Cells-Parsing (schnell)
 
+# Sealed-Inhalte importieren (SQLite lokal oder Railway PostgreSQL):
+python import_sealed_contents.py
+DATABASE_URL=postgresql://... python import_sealed_contents.py
+
 # Gegen Railway-PostgreSQL ausführen (z.B. nach Änderungen an Blacklist/Logik):
 DATABASE_URL=postgresql://... python recompute_prices_only.py
 
@@ -67,20 +71,43 @@ No test suite exists in any component.
 ### Backend
 - `app/routers/products.py` — CRUD for product catalog (SQLAlchemy ORM)
 - `app/routers/insights.py` — analytics endpoints using raw SQL with CTEs and window functions (`ROW_NUMBER`, `LAG`)
+- `app/routers/sealed.py` — `GET /sealed-contents/` und `GET /sealed-contents/{product_id}`
 - `app/db_insights.py` — `fetch_all()` helper using SQLAlchemy `text()`, auto-converts `?` → `:p0, :p1` for dialect compatibility (SQLite + PostgreSQL)
 - `app/database.py` — SQLAlchemy engine + `get_db()` dependency
 - `app/schemas/` — Pydantic request/response models
 - `migrations/` — Alembic migrations; startup runs `alembic upgrade head` before uvicorn
 
 **Key tables** (managed by Alembic):
-- `products` — Product catalog
+- `products` — Product catalog (`id`, `name`, `cardmarket_url`, `game`, `language`, `set_name`, `release_date`, `is_active`)
 - `crawls` — Crawl run timestamps
 - `product_stats` — Price stats per crawl per product (`realistic_price`, `from_price`, `price_trend`, `avg_30d/7d/1d`)
 - `offers` — Individual seller offers per crawl
-- `sealed_contents` — Sealed product contents
+- `sealed_contents` — Sealed product contents: `product_id` (Sealed) → `component_type`, `qty`, `linked_product_id` (Single/Pack). Unique on `(product_id, component_type)`.
 
 **Database:** SQLite (`app.db`) locally, PostgreSQL on Railway. Set via `DATABASE_URL` env var.
 **CORS:** Dynamic via `ALLOWED_ORIGINS` env var (comma-separated). Defaults to localhost origins for local dev.
+
+### sealed_contents Datenpflege
+- Quelldatei: `data/sealed_contents.json` — Format: `{ "<product_id>": [{ "component_type": "booster_pack", "qty": 36, "linked_product_id": 122 }] }`
+- Import-Script: `import_sealed_contents.py` — unterstützt SQLite (lokal) und PostgreSQL via `DATABASE_URL`
+- Upsert-Logik: `ON CONFLICT (product_id, component_type) DO UPDATE SET qty, linked_product_id`
+- Wenn `linked_product_id` nicht in `products` existiert → wird als NULL gespeichert (Warnung im Log)
+
+### Value Ratio Endpoint (`GET /insights/value-ratios`)
+Vergleicht Sealed-Preis vs. Summe der Einzelpreise aller verlinkten Komponenten.
+
+- `value_ratio = singles_sum / sealed_price` — Ratio > 1: Sealed kaufen lohnt sich
+- Nur Sealed-Produkte mit `realistic_price > 0` UND mind. einer Komponente mit bekanntem Preis erscheinen
+- `component_url`: URL des Einzelpacks mit der höchsten Menge (Subquery nach `qty DESC LIMIT 1`)
+- Response-Felder: `product_id`, `product_name`, `sealed_price`, `singles_sum`, `value_ratio`, `priced_components`, `sealed_url`, `component_url`
+
+### PostgreSQL-Kompatibilität (bekannte Fallstricke)
+Beim Schreiben von SQL-Queries für `fetch_all()` unbedingt beachten:
+
+1. **`ROUND()` braucht `NUMERIC`**: `ROUND(float, n)` ist in PostgreSQL ungültig → `ROUND(CAST(expr AS NUMERIC), n)` verwenden
+2. **`MAX(0.0, expr)` gibt es nicht**: In PostgreSQL ist `MAX` nur als Aggregatfunktion gültig, nicht als Skalarfunktion → `CASE WHEN expr < 0 THEN 0.0 ELSE expr END` verwenden
+3. **SELECT-Aliases in `ORDER BY`**: Einfache Alias-Namen (`ORDER BY value_ratio DESC`) funktionieren. Aliases in komplexen Expressions (`CASE WHEN value_ratio IS NULL`) werden von PostgreSQL **nicht** aufgelöst → stattdessen `ORDER BY col DIRECTION NULLS LAST` verwenden
+4. **Division durch Null**: PostgreSQL wirft bei `x / 0` einen Fehler (SQLite ignoriert es) → immer mit `WHERE realistic_price > 0` oder `NULLIF(col, 0)` absichern
 
 ### Frontend
 - `src/router/AppRouter.tsx` — 6 routes: Dashboard, Products, Top Movers, Monthly, Volatility, Value Ratio
@@ -88,6 +115,7 @@ No test suite exists in any component.
 - `src/api/insights.ts` — Typed API client functions for all insight endpoints
 - `src/components/ui/ProductDetailModal.tsx` — Includes price history chart and offer distribution panel
 - `src/pages/ProductsPage.tsx` — Sortable columns, `release_date` column
+- `src/pages/ValueRatioPage.tsx` — Sealed vs. Singles Analyse; Zeilen öffnen ProductDetailModal; Link-Icons (↗) öffnen Cardmarket in neuem Tab ohne Modal-Trigger (`stopPropagation`)
 
 ### Deployment (Railway)
 - **Backend service:** `cardmarket-backend/` — start: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
