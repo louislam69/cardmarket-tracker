@@ -843,7 +843,14 @@ def get_value_ratios(
             lp.realistic_price AS sealed_price,
             cs.singles_sum,
             ROUND(CAST(cs.singles_sum / lp.realistic_price AS NUMERIC), 4) AS value_ratio,
-            cs.priced_components
+            cs.priced_components,
+            p.cardmarket_url AS sealed_url,
+            (SELECT p2.cardmarket_url
+             FROM sealed_contents sc2
+             JOIN products p2 ON p2.id = sc2.linked_product_id
+             WHERE sc2.product_id = p.id AND sc2.linked_product_id IS NOT NULL
+             ORDER BY sc2.qty DESC
+             LIMIT 1) AS component_url
         FROM products p
         JOIN component_sums cs ON cs.sealed_id = p.id
         JOIN lp ON lp.product_id = p.id

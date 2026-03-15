@@ -175,6 +175,8 @@ class ValueRatioItem(BaseModel):
     singles_sum: float
     value_ratio: float
     priced_components: int
+    sealed_url: Optional[str] = None
+    component_url: Optional[str] = None
 
 
 class PaginatedValueRatios(BaseModel):

@@ -249,6 +249,8 @@ export interface ValueRatioItem {
   singles_sum: number;
   value_ratio: number;
   priced_components: number;
+  sealed_url?: string;
+  component_url?: string;
 }
 
 export interface ValueRatiosResponse {

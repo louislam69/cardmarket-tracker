@@ -5,6 +5,25 @@ import ProductDetailModal from "../components/ui/ProductDetailModal";
 type SortOrder = "asc" | "desc";
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
+function CmLink({ url, title }: { url?: string; title: string }) {
+  if (!url) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      title={title}
+      className="flex-shrink-0 text-gray-300 hover:text-blue-500 transition-colors"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="inline w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+      </svg>
+    </a>
+  );
+}
+
 function fmt(v: number) { return v.toFixed(2) + " €"; }
 function fmtRatio(v: number) { return v.toFixed(2) + "×"; }
 
@@ -110,9 +129,19 @@ export default function ValueRatioPage() {
                       onClick={() => setSelectedProduct({ id: item.product_id, name: item.product_name })}
                       className="hover:bg-blue-50 cursor-pointer transition-colors"
                     >
-                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{item.product_name}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="truncate">{item.product_name}</span>
+                          <CmLink url={item.sealed_url} title="Sealed-Produkt auf Cardmarket" />
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-right text-gray-700">{fmt(item.sealed_price)}</td>
-                      <td className="px-4 py-3 text-right text-gray-700">{fmt(item.singles_sum)}</td>
+                      <td className="px-4 py-3 text-right text-gray-700">
+                        <span className="inline-flex items-center justify-end gap-1">
+                          {fmt(item.singles_sum)}
+                          <CmLink url={item.component_url} title="Einzelpack auf Cardmarket" />
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-right">
                         <span className={`inline-block px-2.5 py-0.5 rounded-md text-sm font-bold ${ratioGood ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                           {fmtRatio(item.value_ratio)}
