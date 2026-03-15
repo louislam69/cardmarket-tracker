@@ -834,7 +834,7 @@ def get_value_ratios(
 
     col = VALUE_RATIO_SORT_COLUMNS.get(sort_by, "value_ratio")
     direction = "DESC" if sort_order == "desc" else "ASC"
-    order_sql = f"CASE WHEN {col} IS NULL THEN 1 ELSE 0 END, {col} {direction}"
+    order_sql = f"{col} {direction} NULLS LAST"
 
     data_query = base_cte + f"""
         SELECT
