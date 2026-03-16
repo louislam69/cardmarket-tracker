@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const links = [
   { to: "/", label: "Dashboard" },
@@ -11,6 +12,13 @@ const links = [
 
 export default function Navbar() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  async function handleLogout() {
+    await signOut();
+    navigate("/login", { replace: true });
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
@@ -35,6 +43,19 @@ export default function Navbar() {
               </Link>
             );
           })}
+        </div>
+        <div className="ml-auto flex items-center gap-3 shrink-0">
+          {user && (
+            <span className="hidden sm:block text-xs text-gray-500 truncate max-w-[180px]">
+              {user.email}
+            </span>
+          )}
+          <button
+            onClick={handleLogout}
+            className="px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors whitespace-nowrap"
+          >
+            Logout
+          </button>
         </div>
       </div>
     </nav>
