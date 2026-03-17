@@ -8,6 +8,7 @@ const links = [
   { to: "/monthly", label: "Monatsvergleich" },
   { to: "/volatility", label: "Volatilität" },
   { to: "/value-ratio", label: "Sealed vs. Singles" },
+  { to: "/portfolio", label: "Portfolio" },
 ];
 
 export default function Navbar() {

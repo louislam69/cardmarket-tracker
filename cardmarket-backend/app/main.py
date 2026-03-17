@@ -6,6 +6,7 @@ from . import models
 from .routers import products
 from app.routers import insights
 from app.routers import sealed
+from app.routers import portfolio
 from app.auth import get_current_user
 
 # DB-Tabellen aus den Models erstellen (und via Alembic verwaltete Tabellen existieren bereits)
@@ -47,3 +48,4 @@ app.include_router(products.router, prefix="/products", tags=["products"], depen
 
 app.include_router(insights.router, dependencies=_auth)
 app.include_router(sealed.router, dependencies=_auth)
+app.include_router(portfolio.router, dependencies=_auth)

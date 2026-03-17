@@ -14,3 +14,7 @@ export interface Product {
 export async function fetchProduct(productId: number): Promise<Product> {
   return apiGet<Product>(`/products/${productId}`);
 }
+
+export async function fetchProducts(): Promise<Product[]> {
+  return apiGet<Product[]>("/products/");
+}

@@ -20,3 +20,42 @@ export async function apiGet<T>(path: string): Promise<T> {
 
   return res.json();
 }
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const headers = { ...(await authHeaders()), "Content-Type": "application/json" };
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new Error(`API POST ${path} failed with status ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
+  const headers = { ...(await authHeaders()), "Content-Type": "application/json" };
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new Error(`API PATCH ${path} failed with status ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function apiDelete(path: string): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch(`${API_BASE_URL}${path}`, { method: "DELETE", headers });
+
+  if (!res.ok) {
+    throw new Error(`API DELETE ${path} failed with status ${res.status}`);
+  }
+}

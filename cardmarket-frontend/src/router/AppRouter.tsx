@@ -9,6 +9,7 @@ import TopMoversPage from "../pages/TopMoversPage";
 import MonthlyPage from "../pages/MonthlyPage";
 import VolatilityPage from "../pages/VolatilityPage";
 import ValueRatioPage from "../pages/ValueRatioPage";
+import PortfolioPage from "../pages/PortfolioPage";
 
 export default function AppRouter() {
   return (
@@ -28,6 +29,7 @@ export default function AppRouter() {
                     <Route path="/monthly" element={<MonthlyPage />} />
                     <Route path="/volatility" element={<VolatilityPage />} />
                     <Route path="/value-ratio" element={<ValueRatioPage />} />
+                    <Route path="/portfolio" element={<PortfolioPage />} />
                   </Routes>
                 </Layout>
               </ProtectedRoute>
