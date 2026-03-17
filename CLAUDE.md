@@ -109,9 +109,17 @@ Beim Schreiben von SQL-Queries für `fetch_all()` unbedingt beachten:
 3. **SELECT-Aliases in `ORDER BY`**: Einfache Alias-Namen (`ORDER BY value_ratio DESC`) funktionieren. Aliases in komplexen Expressions (`CASE WHEN value_ratio IS NULL`) werden von PostgreSQL **nicht** aufgelöst → stattdessen `ORDER BY col DIRECTION NULLS LAST` verwenden
 4. **Division durch Null**: PostgreSQL wirft bei `x / 0` einen Fehler (SQLite ignoriert es) → immer mit `WHERE realistic_price > 0` oder `NULLIF(col, 0)` absichern
 
+### Auth (Supabase)
+- Supabase-Projekt: `cardmarket-tracker` (ID: `ygpgvrkbzmxuqfkypdpi`)
+- **Backend** (`app/auth.py`): JWT-Verifizierung via JWKS-Endpoint (`/auth/v1/.well-known/jwks.json`). Unterstützt ES256 (aktueller ECC P-256 Key) und HS256. Alle Routen geschützt via `Depends(get_current_user)` in `main.py`.
+- **Frontend** (`src/lib/supabaseClient.ts`, `src/context/AuthContext.tsx`): Supabase JS-Client. Session wird automatisch per Refresh Token erneuert — Nutzer bleibt dauerhaft eingeloggt bis manueller Logout.
+- **Login-Seite** (`src/pages/LoginPage.tsx`): E-Mail + Passwort. Nutzer werden in Supabase unter Authentication → Users angelegt.
+- **Route-Schutz** (`src/components/ProtectedRoute.tsx`): Nicht eingeloggte Nutzer werden auf `/login` umgeleitet.
+- **Wichtig:** Supabase hat im März 2025 von HS256 (Shared Secret) auf ECC P-256 (ES256) umgestellt. `SUPABASE_JWT_SECRET` wird nicht mehr verwendet — stattdessen `SUPABASE_URL` für JWKS-Lookup.
+
 ### Frontend
 - `src/router/AppRouter.tsx` — 6 routes: Dashboard, Products, Top Movers, Monthly, Volatility, Value Ratio
-- `src/api/client.ts` — Base fetch wrapper; uses `VITE_API_BASE_URL` env var (falls back to `/api` for local Vite proxy)
+- `src/api/client.ts` — Base fetch wrapper; uses `VITE_API_BASE_URL` env var (falls back to `/api` for local Vite proxy); hängt Supabase JWT automatisch als `Authorization: Bearer` Header an
 - `src/api/insights.ts` — Typed API client functions for all insight endpoints
 - `src/components/ui/ProductDetailModal.tsx` — Includes price history chart and offer distribution panel
 - `src/pages/ProductsPage.tsx` — Sortable columns, `release_date` column
@@ -120,8 +128,9 @@ Beim Schreiben von SQL-Queries für `fetch_all()` unbedingt beachten:
 ### Deployment (Railway)
 - **Backend service:** `cardmarket-backend/` — start: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - **Frontend service:** `cardmarket-frontend/` — build: `npm install && npm run build`, start: `npm start` (`serve -s dist`)
-- **Backend env vars:** `DATABASE_URL` (auto from PostgreSQL plugin), `ALLOWED_ORIGINS=https://cardmarket-frontend.up.railway.app`
-- **Frontend env vars:** `VITE_API_BASE_URL=https://cardmarket-backend-production-d772.up.railway.app`
+- **Backend env vars:** `DATABASE_URL` (auto from PostgreSQL plugin), `ALLOWED_ORIGINS=https://cardmarket-frontend.up.railway.app`, `SUPABASE_URL=https://ygpgvrkbzmxuqfkypdpi.supabase.co`
+- **Frontend env vars:** `VITE_API_BASE_URL=https://cardmarket-backend-production-d772.up.railway.app`, `VITE_SUPABASE_URL=https://ygpgvrkbzmxuqfkypdpi.supabase.co`, `VITE_SUPABASE_ANON_KEY=<anon key>`
+- **Lokal:** Frontend `.env.local` mit `VITE_SUPABASE_URL` und `VITE_SUPABASE_ANON_KEY` (nicht committed)
 
 ### Scraper
 Single-file scraper (`scrape_cardmarket.py`). Uses a visible Chromium browser with session cookies (`storage_state.json`) to handle Cloudflare and manual captcha solving. Random 8–14s delays between URLs; up to 3 retry attempts per URL.
