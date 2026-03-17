@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./app.db"
-    SUPABASE_JWT_SECRET: str = ""
+    SUPABASE_URL: str = ""
 
     class Config:
         env_file = ".env"
