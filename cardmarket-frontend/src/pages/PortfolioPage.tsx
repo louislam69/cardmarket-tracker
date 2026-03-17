@@ -299,11 +299,13 @@ export default function PortfolioPage() {
                 width={60}
               />
               <Tooltip
-                formatter={(v: number, name: string) => [
-                  fmt(v),
+                formatter={(v, name) => [
+                  typeof v === "number" ? fmt(v) : String(v),
                   name === "portfolio_value" ? "Portfoliowert" : "Investiert",
                 ]}
-                labelFormatter={(label: string) => new Date(label).toLocaleDateString("de-DE")}
+                labelFormatter={(label) =>
+                  typeof label === "string" ? new Date(label).toLocaleDateString("de-DE") : String(label)
+                }
               />
               <Legend
                 formatter={(v: string) => v === "portfolio_value" ? "Portfoliowert" : "Investiert"}
@@ -560,6 +562,7 @@ export default function PortfolioPage() {
       {detailProductId != null && (
         <ProductDetailModal
           productId={detailProductId}
+          productName={purchases.find((p) => p.product_id === detailProductId)?.product_name ?? ""}
           onClose={() => setDetailProductId(null)}
         />
       )}
