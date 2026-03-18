@@ -74,9 +74,12 @@ case "$ACCOUNT_IDX" in
 esac
 
 case "$ACCOUNT_IDX" in
-    0) STORAGE_STATE="$SCRAPER_DIR/storage_state_a.json" ; ACCOUNT_LABEL="Account A" ;;
-    1) STORAGE_STATE="$SCRAPER_DIR/storage_state_b.json" ; ACCOUNT_LABEL="Account B" ;;
-    2) STORAGE_STATE="$SCRAPER_DIR/storage_state_c.json" ; ACCOUNT_LABEL="Account C" ;;
+    0) STORAGE_STATE="$SCRAPER_DIR/storage_state_a.json" ; ACCOUNT_LABEL="Account A"
+       CM_USER="${CM_ACCOUNT_A_USER:-}" ; CM_PASS="${CM_ACCOUNT_A_PASS:-}" ;;
+    1) STORAGE_STATE="$SCRAPER_DIR/storage_state_b.json" ; ACCOUNT_LABEL="Account B"
+       CM_USER="${CM_ACCOUNT_B_USER:-}" ; CM_PASS="${CM_ACCOUNT_B_PASS:-}" ;;
+    2) STORAGE_STATE="$SCRAPER_DIR/storage_state_c.json" ; ACCOUNT_LABEL="Account C"
+       CM_USER="${CM_ACCOUNT_C_USER:-}" ; CM_PASS="${CM_ACCOUNT_C_PASS:-}" ;;
 esac
 
 NEXT_IDX=$(( (ACCOUNT_IDX + 1) % 3 ))
@@ -84,12 +87,12 @@ echo "$NEXT_IDX" > "$ACCOUNT_INDEX_FILE"
 echo "  Verwende: $ACCOUNT_LABEL ($STORAGE_STATE)"
 echo "  Nächster Lauf: Account-Index $NEXT_IDX"
 
-if [ ! -f "$STORAGE_STATE" ]; then
-    echo "❌ Session-Datei fehlt: $STORAGE_STATE"
-    echo "   Bitte erst ausführen: python scrape_cardmarket.py --setup --storage $(basename $STORAGE_STATE)"
+if [ -z "$CM_USER" ] || [ -z "$CM_PASS" ]; then
+    echo "❌ Credentials fehlen für $ACCOUNT_LABEL"
+    echo "   Bitte CM_ACCOUNT_A_USER/PASS (bzw. B/C) in ~/.env eintragen."
     telegram_send "❌ <b>Crawl abgebrochen</b>
-Session-Datei fehlt: $STORAGE_STATE
-Bitte --setup für $ACCOUNT_LABEL durchführen."
+Credentials fehlen für $ACCOUNT_LABEL.
+Bitte ~/.env auf dem VPS ergänzen."
     exit 1
 fi
 
@@ -120,23 +123,24 @@ Falls Captcha erscheint:
 2. <code>tmux attach -t $TMUX_SESSION</code>
 3. ENTER drücken sobald gelöst"
 
-# --- [5/8] Warm-up: Browser aufwärmen, Cookies festigen ---
-echo "[5/8] Warm-up: Session aufwärmen..."
-WARMUP_LOG="$HOME/logs/warmup_${TIMESTAMP}.log"
+# --- [5/8] Login + Warm-up: einloggen, Cookies festigen ---
+echo "[5/8] Login + Warm-up für $ACCOUNT_LABEL..."
+LOGIN_LOG="$HOME/logs/login_${TIMESTAMP}.log"
 
+CM_USER="$CM_USER" CM_PASS="$CM_PASS" \
 "$SCRAPER_VENV/bin/python" "$SCRAPER_DIR/scrape_cardmarket.py" \
-    --warmup \
+    --login \
     --storage "$STORAGE_STATE" \
     --warmup-urls "$SCRAPER_DIR/warmup_urls.txt" \
     --warmup-count 4 \
-    > "$WARMUP_LOG" 2>&1
+    > "$LOGIN_LOG" 2>&1
 
-WARMUP_EXIT=$?
-if [ "$WARMUP_EXIT" -ne 0 ]; then
-    echo "  ⚠️  Warm-up fehlgeschlagen (exit $WARMUP_EXIT) — crawle trotzdem weiter"
-    telegram_send "⚠️ <b>Warm-up fehlgeschlagen</b> (exit $WARMUP_EXIT) — Crawl läuft trotzdem weiter."
+LOGIN_EXIT=$?
+if [ "$LOGIN_EXIT" -ne 0 ]; then
+    echo "  ⚠️  Login fehlgeschlagen (exit $LOGIN_EXIT) — crawle trotzdem weiter"
+    telegram_send "⚠️ <b>Login fehlgeschlagen</b> ($ACCOUNT_LABEL, exit $LOGIN_EXIT) — Crawl läuft trotzdem weiter."
 else
-    echo "  ✅ Warm-up abgeschlossen."
+    echo "  ✅ Login + Warm-up abgeschlossen."
 fi
 
 # --- [6/8] Scraper in tmux starten ---

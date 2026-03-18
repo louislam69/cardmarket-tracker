@@ -398,6 +398,12 @@ def main():
     ap.add_argument("--out-offers", default="offers.csv", help="Pfad/Name für Offers-CSV (optional)")
     ap.add_argument("--setup", action="store_true",
                     help="Öffnet Cardmarket zum manuellen Login und speichert Session (storage_state).")
+    ap.add_argument("--login", action="store_true",
+                    help="Automatischer Login + Warm-up vor dem Crawl (Credentials aus CM_USER/CM_PASS env).")
+    ap.add_argument("--username", default="",
+                    help="Cardmarket Benutzername (oder env: CM_USER).")
+    ap.add_argument("--password", default="",
+                    help="Cardmarket Passwort (oder env: CM_PASS).")
     ap.add_argument("--warmup", action="store_true",
                     help="Warm-up: lädt Session, klickt 3-5 zufällige Warm-up-URLs, speichert Session.")
     ap.add_argument("--warmup-urls", default="warmup_urls.txt",
@@ -436,7 +442,120 @@ def main():
         pw.stop()
         return
 
-    # 2) Warmup-Run: Session laden, ein paar Produkte anklicken, Session speichern
+    # 2) Login-Run: automatisch einloggen + Warm-up, dann Session speichern
+    if args.login:
+        username = args.username or os.environ.get("CM_USER", "")
+        password = args.password or os.environ.get("CM_PASS", "")
+        if not username or not password:
+            print("❌ Kein Username/Passwort. Bitte --username/--password oder CM_USER/CM_PASS env setzen.")
+            sys.exit(1)
+
+        print(f"🔑 Login mit Account: {username}")
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=False,
+                slow_mo=150,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            # Bestehende Session laden falls vorhanden (hat noch nützliche Cookies)
+            ctx_kwargs = {}
+            if storage_path.exists():
+                ctx_kwargs["storage_state"] = str(storage_path)
+            context = browser.new_context(**ctx_kwargs)
+            page = context.new_page()
+            page.set_default_timeout(BASE_TIMEOUT_MS)
+
+            page.goto("https://www.cardmarket.com/en/Pokemon/Account/Login", wait_until="domcontentloaded")
+            try:
+                page.wait_for_load_state("networkidle", timeout=10_000)
+            except Exception:
+                pass
+
+            ensure_human_check_and_persist(page, context, storage_path)
+
+            # Prüfen ob bereits eingeloggt
+            already_in = (
+                page.locator("text=Log out").count() > 0
+                or page.locator("text=Abmelden").count() > 0
+                or page.locator("a[href*='/Account/Logout']").count() > 0
+            )
+
+            if already_in:
+                print("✅ Bereits eingeloggt — überspringe Login-Formular")
+            else:
+                # Login-Formular ausfüllen
+                page.fill('input[name="username"]', username)
+                time.sleep(random.uniform(0.8, 1.5))
+                page.fill('input[type="password"]', password)
+                time.sleep(random.uniform(0.5, 1.0))
+
+                # "Angemeldet bleiben" anklicken falls vorhanden
+                remember = page.locator('input[name="rememberMe"], input[id="rememberMe"]').first
+                if remember.count() > 0 and not remember.is_checked():
+                    remember.check()
+                    print("  ✅ 'Angemeldet bleiben' aktiviert")
+
+                time.sleep(random.uniform(0.5, 1.0))
+                page.click('button[type="submit"]')
+
+                try:
+                    page.wait_for_load_state("networkidle", timeout=20_000)
+                except Exception:
+                    pass
+
+                ensure_human_check_and_persist(page, context, storage_path)
+
+                logged_in = (
+                    page.locator("text=Log out").count() > 0
+                    or page.locator("text=Abmelden").count() > 0
+                    or page.locator("a[href*='/Account/Logout']").count() > 0
+                )
+                if logged_in:
+                    print("✅ Login erfolgreich")
+                else:
+                    print("⚠️ Login-Status unklar — Session trotzdem gespeichert. Bitte noVNC prüfen.")
+                    _send_telegram(
+                        f"⚠️ <b>Login-Status unklar</b> für {username}\n"
+                        f"noVNC: http://{os.environ.get('VPS_IP', 'VPS-IP')}:6080/vnc.html\n"
+                        f"Bitte Browser prüfen."
+                    )
+
+            save_storage(context, str(storage_path))
+
+            # Warm-up: ein paar Seiten besuchen
+            warmup_path = Path(args.warmup_urls)
+            if warmup_path.exists():
+                warmup_urls = read_urls(str(warmup_path))
+                if warmup_urls:
+                    count = min(args.warmup_count, len(warmup_urls))
+                    selected = random.sample(warmup_urls, count)
+                    print(f"🔥 Warm-up: {count} zufällige URLs")
+                    for i, url in enumerate(selected, 1):
+                        print(f"  [{i}/{count}] {url}")
+                        try:
+                            page.goto(url, wait_until="domcontentloaded")
+                            try:
+                                page.wait_for_load_state("networkidle", timeout=10_000)
+                            except Exception:
+                                pass
+                            ensure_human_check_and_persist(page, context, storage_path)
+                            page.evaluate("window.scrollTo(0, Math.random() * 500 + 200)")
+                            time.sleep(random.uniform(1.5, 3.0))
+                            page.evaluate("window.scrollTo(0, Math.random() * 300)")
+                            delay = random.uniform(7, 13)
+                            print(f"  ⏳ Pause {delay:.1f}s")
+                            time.sleep(delay)
+                        except Exception as e:
+                            print(f"  ⚠️ {e}")
+                    save_storage(context, str(storage_path))
+
+            print(f"✅ Login + Warm-up abgeschlossen. Session gespeichert: {storage_path.resolve()}")
+            context.close()
+            browser.close()
+        return
+
+    # 3) Warmup-Run: Session laden, ein paar Produkte anklicken, Session speichern
     if args.warmup:
         if not storage_path.exists():
             print(f"❌ storage_state fehlt: {storage_path}. Erst --setup ausführen.")

@@ -74,6 +74,14 @@ if [ ! -f "$ENV_FILE" ]; then
 # Railway Dashboard → PostgreSQL Plugin → Connect → Public URL
 DATABASE_URL=postgresql://postgres:PASSWORD@HOST.proxy.rlwy.net:PORT/railway
 
+# Cardmarket Account-Credentials (3 Accounts für Rotation)
+CM_ACCOUNT_A_USER=email_a@example.com
+CM_ACCOUNT_A_PASS=passwort_a
+CM_ACCOUNT_B_USER=email_b@example.com
+CM_ACCOUNT_B_PASS=passwort_b
+CM_ACCOUNT_C_USER=email_c@example.com
+CM_ACCOUNT_C_PASS=passwort_c
+
 # Telegram Bot (optional — Benachrichtigungen bei Crawl-Start/Ende/Fehler)
 # Bot erstellen: @BotFather auf Telegram
 TELEGRAM_TOKEN=123456789:ABC-DEIN-TOKEN-HIER
