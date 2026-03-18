@@ -105,6 +105,8 @@ const emptyForm = (): FormState => ({
 
 const inputCls =
   "border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full";
+const inputErrCls =
+  "border border-red-500 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent w-full";
 
 // ---------------------------------------------------------------------------
 // Hauptkomponente
@@ -122,7 +124,7 @@ export default function PortfolioPage() {
   const [editTarget, setEditTarget] = useState<PurchaseItem | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
 
   // Produktdetail-Modal
   const [detailProductId, setDetailProductId] = useState<number | null>(null);
@@ -160,7 +162,7 @@ export default function PortfolioPage() {
   const openAdd = () => {
     setEditTarget(null);
     setForm(emptyForm());
-    setFormError(null);
+    setFormErrors({});
     setFormOpen(true);
   };
 
@@ -174,25 +176,46 @@ export default function PortfolioPage() {
       quantity: String(item.quantity),
       notes: item.notes ?? "",
     });
-    setFormError(null);
+    setFormErrors({});
     setFormOpen(true);
   };
 
   const closeForm = () => {
     setFormOpen(false);
     setEditTarget(null);
+    setFormErrors({});
   };
 
   // ---------------------------------------------------------------------------
   // Speichern
   // ---------------------------------------------------------------------------
   const handleSave = async () => {
-    if (!form.product_id || !form.purchase_date || !form.purchase_price) {
-      setFormError("Produkt, Datum und Kaufpreis sind Pflichtfelder.");
+    const errors: Record<string, string> = {};
+
+    if (!form.product_id) {
+      errors.product_id = "Bitte ein Produkt wählen";
+    }
+    if (!form.purchase_date) {
+      errors.purchase_date = "Pflichtfeld";
+    } else {
+      const year = parseInt(form.purchase_date.split("-")[0], 10);
+      if (isNaN(year) || year < 1900 || year > 2100) {
+        errors.purchase_date = "Bitte ein gültiges Jahr eingeben (4-stellig, z.B. 2023)";
+      }
+    }
+    if (!form.purchase_price || isNaN(parseFloat(form.purchase_price))) {
+      errors.purchase_price = "Pflichtfeld";
+    } else if (parseFloat(form.purchase_price) < 0) {
+      errors.purchase_price = "Preis muss positiv sein";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+
     setSaving(true);
-    setFormError(null);
+    setFormErrors({});
     try {
       const payload = {
         product_id: parseInt(form.product_id),
@@ -209,7 +232,7 @@ export default function PortfolioPage() {
       closeForm();
       await reload();
     } catch (e) {
-      setFormError(String(e));
+      setFormErrors({ general: String(e) });
     } finally {
       setSaving(false);
     }
@@ -446,17 +469,18 @@ export default function PortfolioPage() {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Produkt *</label>
               <select
-                className={inputCls}
+                className={formErrors.product_id ? inputErrCls : inputCls}
                 value={form.product_id}
-                onChange={(e) => setForm((f) => ({ ...f, product_id: e.target.value }))}
+                onChange={(e) => { setForm((f) => ({ ...f, product_id: e.target.value })); setFormErrors((fe) => ({ ...fe, product_id: undefined })); }}
               >
                 <option value="">— Produkt wählen —</option>
-                {products.map((p) => (
+                {[...products].sort((a, b) => a.name.localeCompare(b.name, "de")).map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}{p.set_name ? ` (${p.set_name})` : ""}
                   </option>
                 ))}
               </select>
+              {formErrors.product_id && <p className="text-xs text-red-600 mt-1">{formErrors.product_id}</p>}
             </div>
           )}
           {editTarget && (
@@ -472,10 +496,13 @@ export default function PortfolioPage() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Kaufdatum *</label>
               <input
                 type="date"
-                className={inputCls}
+                className={formErrors.purchase_date ? inputErrCls : inputCls}
                 value={form.purchase_date}
-                onChange={(e) => setForm((f) => ({ ...f, purchase_date: e.target.value }))}
+                min="1900-01-01"
+                max="2100-12-31"
+                onChange={(e) => { setForm((f) => ({ ...f, purchase_date: e.target.value })); setFormErrors((fe) => ({ ...fe, purchase_date: undefined })); }}
               />
+              {formErrors.purchase_date && <p className="text-xs text-red-600 mt-1">{formErrors.purchase_date}</p>}
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Anzahl</label>
@@ -495,10 +522,11 @@ export default function PortfolioPage() {
               min="0"
               step="0.01"
               placeholder="0.00"
-              className={inputCls}
+              className={formErrors.purchase_price ? inputErrCls : inputCls}
               value={form.purchase_price}
-              onChange={(e) => setForm((f) => ({ ...f, purchase_price: e.target.value }))}
+              onChange={(e) => { setForm((f) => ({ ...f, purchase_price: e.target.value })); setFormErrors((fe) => ({ ...fe, purchase_price: undefined })); }}
             />
+            {formErrors.purchase_price && <p className="text-xs text-red-600 mt-1">{formErrors.purchase_price}</p>}
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Notizen (optional)</label>
@@ -510,7 +538,7 @@ export default function PortfolioPage() {
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
             />
           </div>
-          {formError && <div className="text-sm text-red-600">{formError}</div>}
+          {formErrors.general && <div className="text-sm text-red-600">{formErrors.general}</div>}
           <div className="flex justify-end gap-3 pt-2">
             <button
               onClick={closeForm}
