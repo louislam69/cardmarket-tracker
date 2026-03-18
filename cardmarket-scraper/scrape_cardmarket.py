@@ -408,8 +408,8 @@ def main():
                     help="Warm-up: lädt Session, klickt 3-5 zufällige Warm-up-URLs, speichert Session.")
     ap.add_argument("--warmup-urls", default="warmup_urls.txt",
                     help="Datei mit Warm-up URLs (default: warmup_urls.txt).")
-    ap.add_argument("--warmup-count", type=int, default=4,
-                    help="Anzahl zufälliger URLs für Warm-up (default: 4).")
+    ap.add_argument("--warmup-count", type=int, default=3,
+                    help="Anzahl zufälliger URLs für Warm-up (default: 3).")
     ap.add_argument("--limit", type=int, default=0,
                     help="Nur die ersten N URLs crawlen (0 = alle).")
     args = ap.parse_args()
@@ -509,15 +509,8 @@ def main():
                     time.sleep(random.uniform(0.8, 1.5))
                     pass_field.fill(password)
                     time.sleep(random.uniform(0.5, 1.0))
-
-                    # Submit: versuche mehrere Button-Selektoren
-                    for btn_sel in ['button[type="submit"]', 'input[type="submit"]',
-                                    'button:has-text("LOG IN")', 'button:has-text("Login")',
-                                    'button:has-text("Anmelden")', '.loginBtn']:
-                        btn = page.locator(btn_sel).first
-                        if btn.count() > 0:
-                            btn.click()
-                            break
+                    # Enter drücken — funktioniert zuverlässiger als Button-Selektor
+                    pass_field.press("Enter")
 
                     try:
                         page.wait_for_load_state("networkidle", timeout=20_000)
