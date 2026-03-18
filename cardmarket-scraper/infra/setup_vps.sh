@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup_vps.sh — Einmalig als root auf Ubuntu 22.04 ausführen.
+# setup_vps.sh — Einmalig als root auf Ubuntu 24.04 ausführen.
 # Setzt VPS für automatischen Cardmarket-Scraper auf.
 #
 # Verwendung:
@@ -12,13 +12,14 @@ CRAWL_USER="crawl"
 
 echo "=== [1/8] System-Pakete installieren ==="
 apt-get update -qq
+# Ubuntu 24.04: python3.12, libasound2t64 (statt libasound2)
 apt-get install -y \
     xvfb x11vnc novnc websockify tmux \
-    python3.11 python3.11-venv python3.11-dev \
+    python3.12 python3.12-venv python3.12-dev \
     git curl wget \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
     libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
-    libgbm1 libasound2
+    libgbm1 libasound2t64
 
 echo "=== [2/8] User '$CRAWL_USER' anlegen ==="
 if ! id "$CRAWL_USER" &>/dev/null; then
@@ -39,12 +40,12 @@ echo "  Repo-Eigentümer gesetzt: $CRAWL_USER"
 
 echo "=== [4/8] Python venvs erstellen ==="
 # Scraper venv
-sudo -u "$CRAWL_USER" python3.11 -m venv "$REPO_DIR/cardmarket-scraper/.venv"
+sudo -u "$CRAWL_USER" python3.12 -m venv "$REPO_DIR/cardmarket-scraper/.venv"
 sudo -u "$CRAWL_USER" "$REPO_DIR/cardmarket-scraper/.venv/bin/pip" install -q --upgrade pip
 sudo -u "$CRAWL_USER" "$REPO_DIR/cardmarket-scraper/.venv/bin/pip" install -q playwright
 
 # Backend venv
-sudo -u "$CRAWL_USER" python3.11 -m venv "$REPO_DIR/cardmarket-backend/.venv"
+sudo -u "$CRAWL_USER" python3.12 -m venv "$REPO_DIR/cardmarket-backend/.venv"
 sudo -u "$CRAWL_USER" "$REPO_DIR/cardmarket-backend/.venv/bin/pip" install -q --upgrade pip
 sudo -u "$CRAWL_USER" "$REPO_DIR/cardmarket-backend/.venv/bin/pip" install -q \
     -r "$REPO_DIR/cardmarket-backend/requirements.txt"
