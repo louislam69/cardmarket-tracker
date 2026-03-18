@@ -1,0 +1,12 @@
+# Cardmarket Scraper — Crontab für User 'crawl'
+# Installation (aus setup_vps.sh heraus automatisch):
+#   sed "s|REPO_DIR|/home/crawl/cardmarket-projekt|g" crontab.txt | crontab -
+
+# Beim Neustart: virtuellen Display-Stack starten
+@reboot /bin/bash REPO_DIR/cardmarket-scraper/infra/start_display.sh >> /home/crawl/logs/boot_display.log 2>&1
+
+# Alle 2 Tage um 07:00: Crawl starten (1, 3, 5, 7, 9, ... des Monats)
+0 7 */2 * * /bin/bash REPO_DIR/cardmarket-scraper/infra/run_crawl.sh >> /home/crawl/logs/cron_trigger.log 2>&1
+
+# Wöchentlich Sonntag 03:00: Logs älter als 30 Tage löschen
+0 3 * * 0 find /home/crawl/logs -name "*.log" -mtime +30 -delete

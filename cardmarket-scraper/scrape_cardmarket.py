@@ -1,8 +1,11 @@
 import re
 import csv
 import sys
+import os
 import random
 import time
+import urllib.request
+import urllib.parse
 from datetime import datetime
 import json
 from pathlib import Path
@@ -87,6 +90,28 @@ def save_storage(context, path: str):
     context.storage_state(path=path)
 
 
+def _send_telegram(message: str) -> None:
+    """Sendet eine Telegram-Nachricht. Fehler werden stillschweigend ignoriert."""
+    token = os.environ.get("TELEGRAM_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return
+    try:
+        data = urllib.parse.urlencode({
+            "chat_id": chat_id,
+            "text": message,
+            "parse_mode": "HTML",
+        }).encode()
+        req = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            data=data,
+        )
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+    except Exception:
+        pass
+
+
 def ensure_human_check_and_persist(page, context, storage_path: Path):
     """
     Wenn Cloudflare/Captcha sichtbar ist:
@@ -96,6 +121,14 @@ def ensure_human_check_and_persist(page, context, storage_path: Path):
     """
     if is_cloudflare_check(page):
         print("⚠️ Cloudflare/Captcha erkannt. Bitte im Browser lösen, dann ENTER drücken.")
+        vps_ip = os.environ.get("VPS_IP", "VPS-IP")
+        _send_telegram(
+            f"⚠️ <b>Captcha erkannt!</b>\n"
+            f"noVNC: http://{vps_ip}:6080/vnc.html\n\n"
+            f"1. noVNC öffnen\n"
+            f"2. <code>tmux attach -t crawl_session</code>\n"
+            f"3. Captcha lösen → ENTER drücken"
+        )
         input("ENTER...")
         # Kurze Pause, damit Cookies/Redirects sauber durch sind
         try:
@@ -365,6 +398,12 @@ def main():
     ap.add_argument("--out-offers", default="offers.csv", help="Pfad/Name für Offers-CSV (optional)")
     ap.add_argument("--setup", action="store_true",
                     help="Öffnet Cardmarket zum manuellen Login und speichert Session (storage_state).")
+    ap.add_argument("--warmup", action="store_true",
+                    help="Warm-up: lädt Session, klickt 3-5 zufällige Warm-up-URLs, speichert Session.")
+    ap.add_argument("--warmup-urls", default="warmup_urls.txt",
+                    help="Datei mit Warm-up URLs (default: warmup_urls.txt).")
+    ap.add_argument("--warmup-count", type=int, default=4,
+                    help="Anzahl zufälliger URLs für Warm-up (default: 4).")
     ap.add_argument("--limit", type=int, default=0,
                     help="Nur die ersten N URLs crawlen (0 = alle).")
     args = ap.parse_args()
@@ -397,7 +436,68 @@ def main():
         pw.stop()
         return
 
-    # 2) Crawl-Run
+    # 2) Warmup-Run: Session laden, ein paar Produkte anklicken, Session speichern
+    if args.warmup:
+        if not storage_path.exists():
+            print(f"❌ storage_state fehlt: {storage_path}. Erst --setup ausführen.")
+            sys.exit(1)
+
+        warmup_path = Path(args.warmup_urls)
+        if not warmup_path.exists():
+            print(f"❌ Warm-up URLs Datei fehlt: {warmup_path}")
+            sys.exit(1)
+
+        warmup_urls = read_urls(str(warmup_path))
+        if not warmup_urls:
+            print("❌ Keine Warm-up URLs gefunden.")
+            sys.exit(1)
+
+        count = min(args.warmup_count, len(warmup_urls))
+        selected = random.sample(warmup_urls, count)
+
+        print(f"🔥 Warm-up gestartet: {count} zufällige URLs | Account: {storage_path}")
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=False,
+                slow_mo=150,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+            context = browser.new_context(storage_state=str(storage_path))
+            page = context.new_page()
+            page.set_default_timeout(BASE_TIMEOUT_MS)
+
+            for i, url in enumerate(selected, 1):
+                print(f"  [{i}/{count}] {url}")
+                try:
+                    page.goto(url, wait_until="domcontentloaded")
+                    try:
+                        page.wait_for_load_state("networkidle", timeout=10_000)
+                    except Exception:
+                        pass
+
+                    ensure_human_check_and_persist(page, context, storage_path)
+
+                    # Scrollen simulieren (menschliches Verhalten)
+                    page.evaluate("window.scrollTo(0, Math.random() * 500 + 200)")
+                    time.sleep(random.uniform(1.5, 3.0))
+                    page.evaluate("window.scrollTo(0, Math.random() * 300)")
+
+                    delay = random.uniform(7, 13)
+                    print(f"  ⏳ Pause {delay:.1f}s")
+                    time.sleep(delay)
+
+                except Exception as e:
+                    print(f"  ⚠️ Warm-up URL fehlgeschlagen ({e}) — weiter")
+
+            save_storage(context, str(storage_path))
+            print(f"✅ Warm-up abgeschlossen. Session gespeichert: {storage_path.resolve()}")
+
+            context.close()
+            browser.close()
+        return
+
+    # 3) Crawl-Run
     if not storage_path.exists():
         print(f"❌ storage_state fehlt: {storage_path}. Erst --setup ausführen.")
         sys.exit(1)

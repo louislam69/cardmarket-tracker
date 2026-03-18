@@ -1,0 +1,20 @@
+# Warm-up URLs — werden zufällig ausgewählt vor jedem Crawl
+# Zweck: Session aufwärmen, Browsing-Verhalten simulieren
+# Ruhig 10–15 bekannte Produktseiten eintragen (Sets, Booster Boxes, beliebte Singles)
+# Diese Seiten werden NICHT gecrawlt, nur kurz besucht
+
+# Booster Boxes
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Prismatic-Evolutions-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Surging-Sparks-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Stellar-Crown-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Twilight-Masquerade-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Temporal-Forces-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Paradox-Rift-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Obsidian-Flames-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Paldea-Evolved-Booster-Box
+https://www.cardmarket.com/en/Pokemon/Products/Booster-Boxes/Scarlet-Violet-Booster-Box
+
+# Elite Trainer Boxes
+https://www.cardmarket.com/en/Pokemon/Products/Elite-Trainer-Boxes/Prismatic-Evolutions-Elite-Trainer-Box
+https://www.cardmarket.com/en/Pokemon/Products/Elite-Trainer-Boxes/Surging-Sparks-Elite-Trainer-Box
+https://www.cardmarket.com/en/Pokemon/Products/Elite-Trainer-Boxes/Twilight-Masquerade-Elite-Trainer-Box
