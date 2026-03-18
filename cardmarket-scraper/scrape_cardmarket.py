@@ -474,51 +474,71 @@ def main():
 
             ensure_human_check_and_persist(page, context, storage_path)
 
-            # Prüfen ob bereits eingeloggt
-            already_in = (
-                page.locator("text=Log out").count() > 0
-                or page.locator("text=Abmelden").count() > 0
-                or page.locator("a[href*='/Account/Logout']").count() > 0
-            )
+            def _is_logged_in(p) -> bool:
+                return (
+                    p.locator("a[href*='/Account/Logout']").count() > 0
+                    or p.locator("a[href*='Logout']").count() > 0
+                    or p.locator("text=Log out").count() > 0
+                    or p.locator("text=Abmelden").count() > 0
+                    or p.locator("text=Sign out").count() > 0
+                    or p.locator(".avatar, .user-avatar, [data-user]").count() > 0
+                )
 
-            if already_in:
+            if _is_logged_in(page):
                 print("✅ Bereits eingeloggt — überspringe Login-Formular")
             else:
-                # Login-Formular ausfüllen
-                page.fill('input[name="username"]', username)
-                time.sleep(random.uniform(0.8, 1.5))
-                page.fill('input[type="password"]', password)
-                time.sleep(random.uniform(0.5, 1.0))
+                # Login-Formular ausfüllen — Cardmarket zeigt das Formular in der Navbar
+                # Versuche mehrere Selektoren für das Username-Feld
+                user_field = None
+                for sel in ['input[name="username"]', 'input[placeholder="Username"]',
+                            'input[placeholder="Benutzername"]', 'input[type="text"][name*="user" i]']:
+                    cand = page.locator(sel).first
+                    if cand.count() > 0:
+                        user_field = cand
+                        break
 
-                # "Angemeldet bleiben" anklicken falls vorhanden
-                remember = page.locator('input[name="rememberMe"], input[id="rememberMe"]').first
-                if remember.count() > 0 and not remember.is_checked():
-                    remember.check()
-                    print("  ✅ 'Angemeldet bleiben' aktiviert")
+                pass_field = None
+                for sel in ['input[name="userPassword"]', 'input[name="password"]', 'input[type="password"]']:
+                    cand = page.locator(sel).first
+                    if cand.count() > 0:
+                        pass_field = cand
+                        break
 
-                time.sleep(random.uniform(0.5, 1.0))
-                page.click('button[type="submit"]')
+                if user_field and pass_field:
+                    user_field.fill(username)
+                    time.sleep(random.uniform(0.8, 1.5))
+                    pass_field.fill(password)
+                    time.sleep(random.uniform(0.5, 1.0))
 
-                try:
-                    page.wait_for_load_state("networkidle", timeout=20_000)
-                except Exception:
-                    pass
+                    # Submit: versuche mehrere Button-Selektoren
+                    for btn_sel in ['button[type="submit"]', 'input[type="submit"]',
+                                    'button:has-text("LOG IN")', 'button:has-text("Login")',
+                                    'button:has-text("Anmelden")', '.loginBtn']:
+                        btn = page.locator(btn_sel).first
+                        if btn.count() > 0:
+                            btn.click()
+                            break
 
-                ensure_human_check_and_persist(page, context, storage_path)
+                    try:
+                        page.wait_for_load_state("networkidle", timeout=20_000)
+                    except Exception:
+                        pass
 
-                logged_in = (
-                    page.locator("text=Log out").count() > 0
-                    or page.locator("text=Abmelden").count() > 0
-                    or page.locator("a[href*='/Account/Logout']").count() > 0
-                )
-                if logged_in:
-                    print("✅ Login erfolgreich")
+                    ensure_human_check_and_persist(page, context, storage_path)
+
+                    if _is_logged_in(page):
+                        print("✅ Login erfolgreich")
+                    else:
+                        print("⚠️ Login-Status unklar — Session gespeichert. noVNC prüfen.")
+                        _send_telegram(
+                            f"⚠️ <b>Login-Status unklar</b> für {username}\n"
+                            f"noVNC: http://{os.environ.get('VPS_IP', 'VPS-IP')}:6080/vnc.html"
+                        )
                 else:
-                    print("⚠️ Login-Status unklar — Session trotzdem gespeichert. Bitte noVNC prüfen.")
+                    print("⚠️ Login-Formular nicht gefunden — Session gespeichert. noVNC prüfen.")
                     _send_telegram(
-                        f"⚠️ <b>Login-Status unklar</b> für {username}\n"
-                        f"noVNC: http://{os.environ.get('VPS_IP', 'VPS-IP')}:6080/vnc.html\n"
-                        f"Bitte Browser prüfen."
+                        f"⚠️ <b>Login-Formular nicht gefunden</b>\n"
+                        f"noVNC: http://{os.environ.get('VPS_IP', 'VPS-IP')}:6080/vnc.html"
                     )
 
             save_storage(context, str(storage_path))
