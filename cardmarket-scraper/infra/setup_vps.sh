@@ -55,7 +55,8 @@ echo "=== [5/8] Playwright Chromium installieren (als root für System-Deps) ===
 "$REPO_DIR/cardmarket-scraper/.venv/bin/playwright" install-deps chromium
 
 echo "=== [6/8] VNC-Passwort setzen ==="
-sudo -u "$CRAWL_USER" mkdir -p /home/"$CRAWL_USER"/.vnc
+mkdir -p /home/"$CRAWL_USER"/.vnc
+chown "$CRAWL_USER:$CRAWL_USER" /home/"$CRAWL_USER"/.vnc
 echo "Bitte VNC-Passwort eingeben (wird in /home/$CRAWL_USER/.vnc/passwd gespeichert):"
 x11vnc -storepasswd /home/"$CRAWL_USER"/.vnc/passwd
 chown "$CRAWL_USER:$CRAWL_USER" /home/"$CRAWL_USER"/.vnc/passwd
