@@ -49,7 +49,8 @@ npm run lint     # ESLint
 ### Scraper (`cardmarket-scraper/`)
 ```bash
 # Activate venv first (Windows): .venv\Scripts\activate
-python scrape_cardmarket.py --setup              # First-time login, saves session
+python scrape_cardmarket.py --setup              # First-time login, saves session (manuell)
+python scrape_cardmarket.py --login --storage storage_state_a.json  # Auto-Login + Warmup (CM_USER/CM_PASS env)
 python scrape_cardmarket.py                      # Full crawl (urls.txt)
 python scrape_cardmarket.py --urls urls_test.txt --limit 4  # Test run
 ```
@@ -133,7 +134,24 @@ Beim Schreiben von SQL-Queries für `fetch_all()` unbedingt beachten:
 - **Lokal:** Frontend `.env.local` mit `VITE_SUPABASE_URL` und `VITE_SUPABASE_ANON_KEY` (nicht committed)
 
 ### Scraper
-Single-file scraper (`scrape_cardmarket.py`). Uses a visible Chromium browser with session cookies (`storage_state.json`) to handle Cloudflare and manual captcha solving. Random 8–14s delays between URLs; up to 3 retry attempts per URL.
+Single-file scraper (`scrape_cardmarket.py`). Uses a visible Chromium browser with session cookies (`storage_state_a/b/c.json`) to handle Cloudflare and manual captcha solving. Random 8–14s delays between URLs; up to 3 retry attempts per URL.
+
+**Cloud-Automatisierung (VPS: 178.104.83.145):**
+- Hetzner CPX22, Ubuntu 24.04, User `crawl`
+- Cron: alle 2 Tage 07:00 → `infra/run_crawl.sh`
+- Account-Rotation: 3 Cardmarket-Accounts (A→B→C), Zähler in `~/.account_index`
+- Vor jedem Crawl: automatischer Login + Cookie-Banner akzeptieren + 3 Warmup-URLs
+- Credentials in `/home/crawl/.env`: `CM_ACCOUNT_A/B/C_USER/PASS`
+- Nach Crawl: CSVs direkt in Railway PostgreSQL importiert
+- Logs: `/home/crawl/logs/crawl_*.log`, `login_*.log`, `scraper_*.log`
+- noVNC für Captcha-Lösung: `http://178.104.83.145:6080/vnc.html`
+- `PLAYWRIGHT_BROWSERS_PATH=/home/crawl/.cache/ms-playwright` (in `.env`)
+
+**Scraper Modi:**
+- `--setup` — manueller Login, speichert Session (einmalig pro Account)
+- `--login` — automatischer Login + Warmup (wird von `run_crawl.sh` verwendet)
+- `--warmup` — nur Warmup ohne Login
+- `--storage` — Pfad zur Session-Datei (default: `storage_state.json`)
 
 **Known bug fixed:** `EURO_RE` was `r"(\d+[.,]\d+)\s*€"` — could not capture German prices ≥ 1,000 € (e.g. `1.800,00 €` was parsed as `800.0`). Fixed to `r"(\d+(?:[.,]\d+)*)\s*€"`. Run `repair_prices.py` to correct existing DB data.
 
