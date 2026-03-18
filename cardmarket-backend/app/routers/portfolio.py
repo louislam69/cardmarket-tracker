@@ -260,7 +260,7 @@ def get_history(current_user: dict = Depends(get_current_user)):
         JOIN product_stats ps ON ps.product_id = up.product_id
         JOIN crawls c ON c.id = ps.crawl_id
         WHERE up.user_id = ?
-            AND c.crawl_timestamp >= up.purchase_date
+            AND CAST(c.crawl_timestamp AS DATE) >= up.purchase_date
             AND ps.realistic_price > 0
         GROUP BY CAST(c.crawl_timestamp AS DATE)
         ORDER BY date ASC
