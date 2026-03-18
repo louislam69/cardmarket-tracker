@@ -112,6 +112,32 @@ def _send_telegram(message: str) -> None:
         pass
 
 
+def accept_cookies(page):
+    """
+    Klickt auf Cookie-Banner 'Alle akzeptieren' falls vorhanden.
+    Cardmarket zeigt einen Consent-Banner mit optionalen Cookies.
+    """
+    for sel in [
+        'button:has-text("Accept all cookies")',
+        'button:has-text("Alle Cookies akzeptieren")',
+        'button:has-text("Accept all")',
+        'button:has-text("Alle akzeptieren")',
+        'button:has-text("Akzeptieren")',
+        '[id*="accept-all"]',
+        '[class*="accept-all"]',
+        '.consent-accept-all',
+    ]:
+        btn = page.locator(sel).first
+        if btn.count() > 0:
+            try:
+                btn.click()
+                time.sleep(random.uniform(0.8, 1.5))
+                print("  🍪 Cookie-Banner akzeptiert")
+                return
+            except Exception:
+                continue
+
+
 def ensure_human_check_and_persist(page, context, storage_path: Path):
     """
     Wenn Cloudflare/Captcha sichtbar ist:
@@ -473,6 +499,7 @@ def main():
                 pass
 
             ensure_human_check_and_persist(page, context, storage_path)
+            accept_cookies(page)
 
             def _is_logged_in(p) -> bool:
                 return (
