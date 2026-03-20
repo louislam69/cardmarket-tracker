@@ -138,7 +138,7 @@ Single-file scraper (`scrape_cardmarket.py`). Uses a visible Chromium browser wi
 
 **Cloud-Automatisierung (VPS: 178.104.83.145):**
 - Hetzner CPX22, Ubuntu 24.04, User `crawl`
-- Cron: alle 2 Tage 07:00 → `infra/run_crawl.sh`
+- Cron: `0 7 */2 * *` → läuft an **ungeraden Tagen** (1, 3, 5, … 19, 21, …) um 07:00 UTC → `infra/run_crawl.sh`
 - Account-Rotation: 3 Cardmarket-Accounts (A→B→C), Zähler in `~/.account_index`
 - Vor jedem Crawl: automatischer Login + Cookie-Banner akzeptieren + 3 Warmup-URLs
 - Credentials in `/home/crawl/.env`: `CM_ACCOUNT_A/B/C_USER/PASS`
@@ -146,6 +146,16 @@ Single-file scraper (`scrape_cardmarket.py`). Uses a visible Chromium browser wi
 - Logs: `/home/crawl/logs/crawl_*.log`, `login_*.log`, `scraper_*.log`
 - noVNC für Captcha-Lösung: `http://178.104.83.145:6080/vnc.html`
 - `PLAYWRIGHT_BROWSERS_PATH=/home/crawl/.cache/ms-playwright` (in `.env`)
+- **Telegram:** Code in `run_crawl.sh` vorhanden, aber `TELEGRAM_TOKEN` + `TELEGRAM_CHAT_ID` noch nicht in `/home/crawl/.env` eingetragen → Benachrichtigungen noch inaktiv
+
+**Troubleshooting Crawl:**
+- Scraper fertig, aber CSVs nicht importiert (Timeout in `run_crawl.sh`)? CSVs liegen in `/home/crawl/cardmarket-projekt/cardmarket-backend/data/new/` — manuell importieren:
+  ```bash
+  cd /home/crawl/cardmarket-projekt/cardmarket-backend
+  source .venv/bin/activate
+  DATABASE_URL=$(grep DATABASE_URL /home/crawl/.env | cut -d= -f2-) python import_csv_runs.py
+  ```
+- SSH-Zugang: `ssh root@178.104.83.145` (SSH-Key `hetzner-cardmarket` in `~/.ssh/`)
 
 **Scraper Modi:**
 - `--setup` — manueller Login, speichert Session (einmalig pro Account)
