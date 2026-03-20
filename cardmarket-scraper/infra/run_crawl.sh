@@ -153,7 +153,7 @@ tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
 # Scraper in neuer tmux-Session starten; Exit-Code in DONE_FLAG schreiben
 SCRAPER_LOG="$HOME/logs/scraper_${TIMESTAMP}.log"
 tmux new-session -d -s "$TMUX_SESSION" \
-    "DISPLAY=:1 '$SCRAPER_VENV/bin/python' '$SCRAPER_DIR/scrape_cardmarket.py' --storage '$STORAGE_STATE' --urls '$SCRAPER_DIR/urls.txt' 2>&1 | tee '$SCRAPER_LOG'; echo \${PIPESTATUS[0]} > '$DONE_FLAG'"
+    "DISPLAY=:1 '$SCRAPER_VENV/bin/python' '$SCRAPER_DIR/scrape_cardmarket.py' --storage '$STORAGE_STATE' --urls '$SCRAPER_DIR/urls.txt' > '$SCRAPER_LOG' 2>&1; echo \$? > '$DONE_FLAG'"
 
 echo "  tmux-Session '$TMUX_SESSION' läuft."
 echo "  Ankoppeln: tmux attach -t $TMUX_SESSION"
