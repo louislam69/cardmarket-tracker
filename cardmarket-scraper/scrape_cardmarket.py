@@ -860,9 +860,9 @@ def main():
         print("  Offers:  ", str(out_offers_path))
         print(" Meta:    ", str(out_root / f"run_meta_{run_stamp}{tag_suffix}.json"))
 
-
-        context.close()
-        browser.close()
+        # Playwright-Cleanup kann hängen (browser.close() wartet auf Browser-Prozess).
+        # os._exit(0) beendet den Prozess sofort — OS übernimmt Cleanup.
+        os._exit(0)
 
 
 if __name__ == "__main__":
